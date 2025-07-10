@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  --color-purple-700: #3336c4;
+  --color-purple-500: #6366f1; /* 메인컬러 */
+  --color-purple-300: #a5b4fc; /*서브컬러 */
+  --color-red: #ff6d6d;
+  --color-yellow: #e5e03e;
+  --color-green: #7bd35b;
+}
