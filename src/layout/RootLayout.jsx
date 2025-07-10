@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Menu from "./Menu";
 import Header from "./Header";
+import Footer from "./Footer";
 
 function RootLayout() {
   return (
@@ -11,6 +12,7 @@ function RootLayout() {
       <div className="">
         <Outlet />
       </div>
+      <Footer />
     </div>
   );
 }
