@@ -1,6 +1,6 @@
 import React from "react";
 
-function Home() {
+function Meal() {
   return (
     <div className="w-[1020px] mx-auto">
       <div>식단분석</div>
@@ -8,4 +8,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Meal;

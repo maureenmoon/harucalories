@@ -3,6 +3,7 @@ import Meal from "../pages/meal/Meal";
 import RootLayout from "../layout/RootLayout";
 import haruReportRoutes from "./haruReportRoutes";
 import communityRoutes from "./communityRoutes";
+import MyPage from "../pages/mypage/MyPage";
 
 const root = createBrowserRouter([
   {
@@ -24,6 +25,16 @@ const root = createBrowserRouter([
     path: "/community",
     element: <RootLayout />,
     children: communityRoutes,
+  },
+  {
+    path: "/mypage",
+    element: <RootLayout />,
+    children: [
+      {
+        path: "/mypage",
+        element: <MyPage />,
+      },
+    ],
   },
 ]);
 
