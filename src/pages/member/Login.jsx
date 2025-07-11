@@ -61,7 +61,7 @@ function Login() {
         <div className="flex justify-between ">
           <div className="text-sm text-gray-600">아이디/비밀번호찾기</div>
           <div className="text-sm text-gray-600">
-            <Link to="member/signup">회원가입</Link>
+            <Link to="../signup">회원가입</Link>
           </div>
         </div>
       </div>
