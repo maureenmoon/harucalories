@@ -1,9 +1,11 @@
 import { createBrowserRouter } from "react-router-dom";
 import Meal from "../pages/meal/Meal";
+import Analyis from "../pages/meal/Analyis";
 import RootLayout from "../layout/RootLayout";
 import haruReportRoutes from "./haruReportRoutes";
 import communityRoutes from "./communityRoutes";
 import MyPage from "../pages/mypage/MyPage";
+import memberRoutes from "./memberRoutes";
 
 const root = createBrowserRouter([
   {
@@ -13,6 +15,10 @@ const root = createBrowserRouter([
       {
         path: "/",
         element: <Meal />,
+      },
+      {
+        path: "/Analyis",
+        element: <Analyis />,
       },
     ],
   },
@@ -25,6 +31,11 @@ const root = createBrowserRouter([
     path: "/community",
     element: <RootLayout />,
     children: communityRoutes,
+  },
+  {
+    path: "/member",
+    element: <RootLayout />,
+    children: memberRoutes,
   },
   {
     path: "/mypage",
