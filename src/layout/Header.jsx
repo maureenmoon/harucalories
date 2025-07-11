@@ -25,7 +25,7 @@ function Header() {
           <li>
             <Link
               to="/mypage"
-              className="font-semibold text-purple-500  hover:underline"
+              className="font-semibold text-purple-500 hover:underline"
             >
               {nickname}
             </Link>
@@ -38,7 +38,9 @@ function Header() {
             </li>
           ) : (
             <li>
-              <p className="text-sm text-gray-400">로그인</p>
+              <Link to={"member/login"}>
+                <p className="text-sm text-gray-400 hover:underline">로그인</p>
+              </Link>
             </li>
           )}
         </ul>
