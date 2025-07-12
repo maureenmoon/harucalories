@@ -8,7 +8,7 @@ function SubLayout({ to, menu, label }) {
         <Link to={to} className="md:block">
           <p className="text-mb md:text-xl text-gray-400 font-base hover:underline cursor-pointer flex">
             {menu}
-            <span className="hidden md:block">></span>
+            <span className="hidden md:block"></span>
           </p>
         </Link>
         <h1 className="text-3xl md:text-xl font-semibold text-center md:text-left mt-0 md:mt-0">
