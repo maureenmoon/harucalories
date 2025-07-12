@@ -10,7 +10,7 @@ import { createSlice } from "@reduxjs/toolkit";
 //new user 새로운 사용자
 const initState = {
   email: "",
-  nickname: "",
+  nickname: "ansora17",
 };
 
 const loginSlice = createSlice({
