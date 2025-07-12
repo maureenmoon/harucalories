@@ -1,9 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+//기존 사용자 로그인
+// const initState = {
+//   // email: "ttomi99@naver.com",
+//   nickname: "ansora17",
+//   userid: 1,
+// };
+
+//new user 새로운 사용자
 const initState = {
-  // email: "ttomi99@naver.com",
-  nickname: "ansora17",
-  userid: 1,
+  email: "",
+  nickname: "",
 };
 
 const loginSlice = createSlice({
