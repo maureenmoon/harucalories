@@ -9,11 +9,15 @@ import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const navigate = useNavigate();
+
+  const [isComplete, setIsComplete] = useState(false); //Hooks must be called inside the comp
+  const [calories, setCalories] = useState(0);
   const [step, setStep] = useState(1); // 1: basic info, 2: extra info
 
   const [form, setForm] = useState({
     email: "",
     password: "",
+    passwordConfirm: "",
     nickname: "",
     name: "",
     birthAt: "",
@@ -24,7 +28,11 @@ export default function Signup() {
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
   };
 
   const handleSubmitStep1 = async (e) => {
@@ -41,7 +49,7 @@ export default function Signup() {
 
     try {
       await checkDuplication(form.email, form.nickname);
-      setStep(2); // Move to next step
+      setStep(2);
     } catch (err) {
       alert("이미 사용 중인 이메일 또는 닉네임입니다.");
     }
@@ -49,6 +57,7 @@ export default function Signup() {
 
   const handleSubmitFinal = async (e) => {
     e.preventDefault();
+
     const { birthAt, gender, activityLevel, height, weight } = form;
     if (!birthAt || !gender || !activityLevel || !height || !weight) {
       return alert("모든 정보를 정확히 입력해주세요.");
@@ -56,8 +65,15 @@ export default function Signup() {
 
     try {
       const result = await signup(form);
-      alert("회원가입이 완료되었습니다!");
-      setTimeout(() => navigate("/"), 800); //redirect to main page in 0.8sec
+      const dailyCalories = calculateCalories(form);
+      setCalories(dailyCalories);
+
+      //save globally until bk-end is ready
+      localStorage.setItem("dailyCalories", dailyCalories);
+      localStorage.setItem("nickname", form.nickname);
+
+      setIsComplete(true);
+      // setTimeout(() => navigate("/"), 800);//redirect to main page in 0.8sec
       console.log(result);
     } catch (err) {
       alert("서버 오류 또는 잘못된 입력입니다.");
@@ -65,44 +81,74 @@ export default function Signup() {
     }
   };
 
+  const calculateCalories = ({
+    birthAt,
+    gender,
+    height,
+    weight,
+    activityLevel,
+  }) => {
+    const birthDate = new Date(birthAt);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+
+    const h = parseFloat(height);
+    const w = parseFloat(weight);
+    let bmr;
+    if (gender === "남성" || gender === "MALE") {
+      bmr = 10 * w + 6.25 * h - 5 * age + 5;
+    } else {
+      bmr = 10 * w + 6.25 * h - 5 * age - 161;
+    }
+    let activityFactor = 1.55;
+    if (activityLevel === "조금 활동적" || activityLevel === "LOW")
+      activityFactor = 1.375;
+    else if (activityLevel === "매우 활동적" || activityLevel === "HIGH")
+      activityFactor = 1.725;
+
+    return Math.round(bmr * activityFactor);
+  };
+
   return (
     <div className="flex justify-center items-start min-h-screen pt-20 bg-white px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shasow-md p-6 sm:p-8">
-        {step === 1 && (
+      <div className="w-full max-w-md bg-white rounded-xl shadow-md p-6 sm:p-8">
+        {isComplete ? (
+          <ConfirmationScreen name={form.name} calories={calories} />
+        ) : step === 1 ? (
           <>
             <h2 className="text-2xl font-bold mb-6 text-center">회원가입</h2>
             <form onSubmit={handleSubmitStep1} className="space-y-4">
               <Input
                 name="email"
-                placeholder="이메일"
                 value={form.email}
                 onChange={handleChange}
+                placeholder="이메일"
               />
               <Input
                 name="password"
                 type="password"
-                placeholder="비밀번호"
                 value={form.password}
                 onChange={handleChange}
+                placeholder="비밀번호"
               />
               <Input
                 name="passwordConfirm"
                 type="password"
-                placeholder="비밀번호 확인"
                 value={form.passwordConfirm}
                 onChange={handleChange}
+                placeholder="비밀번호 확인"
               />
               <Input
                 name="nickname"
-                placeholder="닉네임"
                 value={form.nickname}
                 onChange={handleChange}
+                placeholder="닉네임"
               />
               <Input
                 name="name"
-                placeholder="이름"
                 value={form.name}
                 onChange={handleChange}
+                placeholder="이름"
               />
               <button
                 type="submit"
@@ -112,9 +158,7 @@ export default function Signup() {
               </button>
             </form>
           </>
-        )}
-
-        {step === 2 && (
+        ) : (
           <>
             <h2 className="text-2xl font-bold mb-6 text-center">
               추가 정보 입력
@@ -132,9 +176,9 @@ export default function Signup() {
               <Input
                 name="birthAt"
                 type="date"
-                placeholder="생년월일"
                 value={form.birthAt}
                 onChange={handleChange}
+                placeholder="생년월일"
               />
               <Select
                 name="activityLevel"
@@ -148,17 +192,16 @@ export default function Signup() {
               />
               <Input
                 name="height"
-                placeholder="키 (cm)"
                 value={form.height}
                 onChange={handleChange}
+                placeholder="키 (cm)"
               />
               <Input
                 name="weight"
-                placeholder="몸무게 (kg)"
                 value={form.weight}
                 onChange={handleChange}
+                placeholder="몸무게 (kg)"
               />
-
               <button
                 type="submit"
                 className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -200,7 +243,33 @@ const Select = ({ name, value, onChange, options }) => (
     ))}
   </select>
 );
-// Stub function (you can replace it later)
-const calculateCalories = (form) => {
-  return 2000; // placeholder
+
+// Confirmation Screen
+const ConfirmationScreen = ({ name, calories }) => {
+  const navigate = useNavigate();
+  const handleStart = () => navigate("/");
+
+  return (
+    <div className="space-y-4 text-center">
+      <h2 className="text-2xl font-bold">스마트한 다이어트 시작!</h2>
+      <p className="text-lg">
+        안녕하세요, <strong>{name} 님</strong>
+      </p>
+      <div className="bg-gray-100 p-4 rounded shadow">
+        <span className="text-lg">목표 kcal</span>
+        <span className="text-3xl font-bold text-red-500 ml-2">{calories}</span>
+      </div>
+      <p>
+        하루 칼로리를 통해
+        <br />
+        성공적인 다이어트에 도전해 보세요
+      </p>
+      <button
+        className="w-full py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700"
+        onClick={handleStart}
+      >
+        하루칼로리 시작하기
+      </button>
+    </div>
+  );
 };

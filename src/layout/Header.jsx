@@ -38,7 +38,7 @@ function Header() {
             </li>
           ) : (
             <li>
-              <Link to={"member/login"}>
+              <Link to={"../member/login"}>
                 <p className="text-sm text-gray-400 hover:underline">로그인</p>
               </Link>
             </li>
