@@ -9,30 +9,52 @@ function WriteView() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
 
-  useEffect(() => {
-    const stored = localStorage.getItem("lastPost");
-    const parsed = stored ? JSON.parse(stored) : null;
-
-    if (parsed && parsed.id === Number(id)) {
-      setPost(parsed);
-    } else {
-      // 나중엔 axios.get(`/api/posts/${id}`)로 대체
-      setPost(null);
-    }
-  }, [id]);
-
   const handleAddComment = () => {
-    if (!commentText.trim()) return alert("댓글을 입력해주세요.");
+    if (!commentText.trim()) {
+      alert("댓글을 입력해주세요.");
+      return;
+    }
+
+    const now = new Date();
     const newComment = {
       id: Date.now(),
       nickname: "내닉네임",
       text: commentText,
-      date: "25.03.26",
-      time: "13:23",
+      date: now.toLocaleDateString("ko-KR").replace(/\.$/, ""), // "2025. 7. 14"
+      time: now.toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }), // "13:45"
     };
-    setComments([...comments, newComment]);
+
+    const updatedComments = [...comments, newComment];
+    setComments(updatedComments);
     setCommentText("");
+
+    // ✅ 여기! 게시글 ID 기준으로 localStorage에 저장
+    localStorage.setItem(`comments-${id}`, JSON.stringify(updatedComments));
   };
+
+  const handleDelete = () => {
+    if (!window.confirm("정말 삭제하시겠습니까?")) return;
+    const posts = JSON.parse(localStorage.getItem("posts")) || [];
+    const filtered = posts.filter((p) => p.id !== Number(id));
+    localStorage.setItem("posts", JSON.stringify(filtered));
+    alert("삭제 완료!");
+    navigate("/community/board");
+  };
+
+  useEffect(() => {
+    // 게시글 불러오기
+    const allPosts = JSON.parse(localStorage.getItem("posts")) || [];
+    const found = allPosts.find((p) => p.id === Number(id));
+    setPost(found);
+
+    // ✅ 댓글 불러오기 (key: comments-게시글ID)
+    const savedComments =
+      JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
+    setComments(savedComments);
+  }, [id]);
 
   const handleEdit = () => {
     navigate(`/community/board/update/${id}`);
@@ -44,9 +66,9 @@ function WriteView() {
     );
 
   return (
-    <div className="w-[1020px] mx-auto mt-10">
+    <div className="w-[1020px] mx-auto mt-8">
       {/* 상단 헤더 */}
-      <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-4">
+      <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start ">
         <Link to="/community" className="hidden md:block mb-3">
           <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
             커뮤니티&gt;
@@ -75,7 +97,12 @@ function WriteView() {
         >
           수정하기
         </button>
-        <button className="btn bg-gray-700 text-white btn-sm">삭제하기</button>
+        <button
+          className="btn bg-gray-700 text-white btn-sm"
+          onClick={handleDelete}
+        >
+          삭제하기
+        </button>
         <Link to="/community/board">
           <button className="btn bg-gray-700 text-white btn-sm">
             목록가기
