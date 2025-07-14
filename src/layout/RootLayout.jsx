@@ -6,14 +6,16 @@ import Footer from "./Footer";
 
 function RootLayout() {
   return (
-    <div className="mx-auto">
-      <Header />
-      <Menu />
-      <div className="">
-        <Outlet />
+    <>
+      <div className="min-h-screen pb-28">
+        <Header />
+        <Menu />
+        <div className="">
+          <Outlet />
+        </div>
       </div>
       <Footer />
-    </div>
+    </>
   );
 }
 
