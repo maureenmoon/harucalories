@@ -34,6 +34,7 @@ const root = createBrowserRouter([
   },
   {
     path: "/member",
+    // path: "/login",
     element: <RootLayout />,
     children: memberRoutes,
   },
@@ -42,7 +43,8 @@ const root = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
-        path: "/mypage",
+        // path: "/mypage",
+        path: "",
         element: <MyPage />,
       },
     ],

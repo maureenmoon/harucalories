@@ -20,10 +20,28 @@ function Login() {
     setLoginParam({ ...loginParam, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  // const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(loginParam);
-    dispatch(login(loginParam));
+    console.log("로그인 정보 : ", loginParam);
+    // dispatch(login(loginParam));
+
+    //✅ replace this block with actual API call
+    //const response = awiat axios.post("api/login",loginParam)
+    //dispatch(login(response.data))
+    const mockUserDataFromApi = {
+      userid: 1,
+      email: loginParam.email,
+      nickname: "sora17",
+      name: "안소라",
+      height: 163,
+      weight: 55,
+      targetCalories: 2100,
+      activityLevel: "medium",
+      photo: "", // or URL
+    };
+    dispatch(login(mockUserDataFromApi));
+
     Navigate("/");
   };
 
