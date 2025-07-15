@@ -36,47 +36,54 @@ function Write() {
   };
 
   return (
+
     <div className="w-[1020px] mx-auto ">
       <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-8 ">
         <Link to="/community" className="hidden md:block  ">
           <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
             커뮤니티
+
           </p>
         </Link>
-        <h1 className="text-[18px] md:text-xl font-semibold text-center md:text-left mt-0 md:mt-0">
+        <h1 className="text-lg sm:text-2xl font-semibold text-center md:text-left">
           자유게시판
         </h1>
       </div>
 
-      <div className="items-center  mt-1">
-        <p className="p-2 font-bold text-gray-900">글을 작성하는 공간입니다.</p>
+      <div className="items-center mt-1">
+        <p className="p-2 font-bold text-gray-900 text-sm sm:text-base">
+          글을 작성하는 공간입니다.
+        </p>
         {/* 제목 입력 */}
-
-        <div className=" flex border-t border-b border-gray-400 items-center p-2 gap-7 justify-center ">
-          <p className="text-gray-800 text-sm">제목</p>
+        <div className="flex flex-col sm:flex-row border-t border-b border-gray-400 items-start sm:items-center p-2 gap-2 sm:gap-7 justify-center">
+          <p className="text-gray-800 text-sm sm:text-base w-full sm:w-auto">
+            제목
+          </p>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="제목을 입력해주세요"
-            className=" w-[900px] h-10 rounded bg-gray-200 px-4 "
+            className="w-full sm:w-[900px] h-10 rounded bg-gray-200 px-4"
           />
         </div>
 
         {/* 내용 입력 */}
-        <div className=" flex  border-b border-gray-400 items-center gap-7 p-2  mb-3 justify-center">
-          <p className="text-gray-800 text-sm">내용</p>
+        <div className="flex flex-col sm:flex-row border-b border-gray-400 items-start sm:items-center gap-2 sm:gap-7 p-2 mb-3 justify-center">
+          <p className="text-gray-800 text-sm sm:text-base w-full sm:w-auto">
+            내용
+          </p>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="내용을 입력하세요"
-            className="w-[900px] h-[500px] rounded bg-gray-200 p-4  resize-none"
+            className="w-full sm:w-[900px] h-[300px] sm:h-[500px] rounded bg-gray-200 p-4 resize-none"
           />
         </div>
       </div>
-      {/* 등록 버튼 */}
 
-      <div className="flex justify-end mb-14">
+      {/* 등록 버튼 */}
+      <div className="flex justify-end mb-8">
         <PurBtn label={"작성완료"} onClick={handleSubmit} />
       </div>
     </div>
