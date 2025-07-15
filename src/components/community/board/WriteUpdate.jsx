@@ -35,41 +35,47 @@ function WriteUpdate() {
   };
 
   return (
-    <div className="w-[1020px] mx-auto mt-8">
-      <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-4">
-        <Link to="/community" className="hidden md:block  ">
-          <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
-            커뮤니티>
+    <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
+      <div className="flex flex-col items-center text-gray-500 md:flex-row md:items-start">
+        <Link to="/community" className="hidden md:block">
+          <p className="text-lg sm:text-2xl font-semibold hover:underline cursor-pointer">
+            커뮤니티{">"}
           </p>
         </Link>
-        <h1 className="text-[18px] md:text-xl font-semibold text-center md:text-left mt-0 md:mt-0">
+        <h1 className="text-lg sm:text-2xl font-semibold text-center md:text-left">
           자유게시판
         </h1>
       </div>
 
       <div>
-        <p className="p-2 font-bold text-gray-900">글을 수정하는 공간입니다.</p>
-        <div className="flex border-t border-b border-gray-400 items-center p-2 gap-7 justify-center">
-          <p className="text-gray-800 text-sm">제목</p>
+        <p className="p-2 font-bold text-gray-900 text-sm sm:text-base">
+          글을 수정하는 공간입니다.
+        </p>
+        <div className="flex flex-col sm:flex-row border-t border-b border-gray-400 items-start sm:items-center p-2 gap-2 sm:gap-7 justify-center">
+          <p className="text-gray-800 text-sm sm:text-base w-full sm:w-auto">
+            제목
+          </p>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-[900px] h-12 mb rounded bg-gray-100 px-4"
+            className="w-full sm:w-[900px] h-10 rounded bg-gray-100 px-4"
           />
         </div>
-        <div className="flex  border-b border-gray-400 items-center gap-7 p-2 justify-center">
-          <p className="text-gray-800 text-sm">내용</p>
+        <div className="flex flex-col sm:flex-row border-b border-gray-400 items-start sm:items-center gap-2 sm:gap-7 p-2 justify-center">
+          <p className="text-gray-800 text-sm sm:text-base w-full sm:w-auto">
+            내용
+          </p>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-[900px] h-[500px] rounded bg-gray-100 p-4"
+            className="w-full sm:w-[900px] h-[300px] sm:h-[500px] rounded bg-gray-100 p-4 resize-none"
           />
         </div>
 
-        <div className="flex justify-end mt-4 mb-14">
+        <div className="flex justify-end mt-4 mb-8">
           <button
             onClick={handleUpdate}
-            className="btn bg-purple-500 text-white"
+            className="btn bg-purple-500 text-white w-full sm:w-auto"
           >
             수정 완료
           </button>

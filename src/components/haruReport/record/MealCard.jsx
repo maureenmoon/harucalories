@@ -20,10 +20,10 @@ function MealCard({ meal }) {
   };
 
   return (
-    <div className="bg-purple-50 rounded-2xl p-4 mb-2 shadow-sm">
+    <div className="bg-gray-50 rounded-2xl p-3 sm:p-4 shadow-sm">
       <div>
-        <div className="flex items-center gap-4">
-          <div className="w-30 h-30 bg-gray-200 rounded-lg overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <div className="w-full sm:w-30 h-30 bg-gray-200 rounded-lg overflow-hidden">
             {meal.imageUrl && (
               <img
                 src={meal.imageUrl}
@@ -33,28 +33,32 @@ function MealCard({ meal }) {
             )}
           </div>
 
-          <div className="flex-1 ">
-            <div className="flex justify-between items-center mb-2 ">
-              <h3 className="text-lg font-semibold text-gray-800">
+          <div className="flex-1 w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                 {meal.type}
-                <span className="text-sm font-normal ml-1 text-gray-600">
+                <span className="text-xs sm:text-sm font-normal ml-1 text-gray-600">
                   {formatTime(meal.createDate)}
                 </span>
               </h3>
 
-              <div className="text-right">
-                <p className="text-lg font-semibold">{meal.totalKcal}kcal</p>
+              <div className="text-right mt-1 sm:mt-0">
+                <p className="text-base sm:text-lg font-semibold">
+                  {meal.totalKcal}kcal
+                </p>
               </div>
             </div>
 
             {meal.foods.length > 0 && (
               <div className="mb-2">
-                <h4 className="font-semibold mb-1 text-gray-800">섭취 음식</h4>
+                <h4 className="font-semibold mb-1 text-gray-800 text-sm sm:text-base">
+                  섭취 음식
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {meal.foods.map((food) => (
                     <span
                       key={food.foodId}
-                      className="bg-white px-2 py-1 rounded text-xs"
+                      className="bg-white px-2 py-1 rounded text-xs sm:text-sm"
                     >
                       {food.foodName} ({food.kcal}kcal)
                     </span>

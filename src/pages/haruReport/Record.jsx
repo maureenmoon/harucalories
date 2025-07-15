@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import MealSummary from "../../components/haruReport/MealSummary";
-import HaruCalendar from "../../components/haruReport/Calendar";
-import MealCard from "../../components/haruReport/MealCard";
+
+import HaruCalendar from "../../components/haruReport/record/Calendar";
+import MealCard from "../../components/haruReport/record/MealCard";
 import { Link } from "react-router-dom";
+import MealSummary from "../../components/haruReport/record/MealSummary";
 
 function Record() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -347,14 +348,14 @@ function Record() {
   }, [mealData, selectedDate]);
 
   return (
-    <div className="w-[1020px] mx-auto ">
-      <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-8">
-        <Link to="/haruReport" className="hidden md:block mb-3 ">
-          <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
-            리포트>
+    <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
+      <div className="flex flex-col items-center text-gray-500 md:flex-row md:items-start">
+        <Link to="/haruReport" className="hidden md:block mb-3">
+          <p className="text-lg sm:text-2xl font-semibold hover:underline cursor-pointer">
+            리포트{">"}
           </p>
         </Link>
-        <h1 className="text-[18px] md:text-xl font-semibold text-center md:text-left mt-0 md:mt-0">
+        <h1 className="text-lg sm:text-2xl font-semibold text-center md:text-left mt-0 md:mt-0">
           기록습관
         </h1>
       </div>
@@ -367,15 +368,14 @@ function Record() {
         onDateClick={handleDateClick}
         onMonthChange={(date) => {
           setSelectedDate(date);
-          // 월 변경 시 선택된 날짜들 초기화
           setSelectedDates([]);
         }}
-        className="mb-14"
+        className="mb-8"
       />
 
       {selectedDates.length > 0 && (
-        <div className="mt-8 mb-14">
-          <h2 className="text-xl font-bold mb-4 text-gray-700 ml-2">
+        <div className="mt-8 mb-8">
+          <h2 className="text-lg sm:text-2xl font-bold mb-4 text-gray-700 ml-2">
             |선택된 날짜의 식사 기록
           </h2>
 
@@ -431,7 +431,7 @@ function Record() {
                 <React.Fragment key={date}>
                   {/* 날짜 간 공복 구간 표시 */}
                   {idx > 0 && fastingGap && (
-                    <div className="flex items-center ml-5 my-4">
+                    <div className="flex items-center ml-5 ">
                       <img
                         src="/images/mark.png"
                         alt="날짜 사이 공복 타임라인"
@@ -444,8 +444,8 @@ function Record() {
                   )}
 
                   {/* 날짜별 카드 묶음 */}
-                  <div className="mb-4 border border-gray-300 rounded-2xl p-4 bg-white shadow">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-1 mr-3 flex justify-end">
+                  <div className="border border-gray-300 rounded-2xl p-4 sm:p-6 bg-white shadow">
+                    <h3 className="text-mb font-semibold text-gray-700 mb-1 mr-3 flex justify-end">
                       {date}
                     </h3>
 
@@ -455,14 +455,14 @@ function Record() {
 
                         {/* 같은 날짜 내 식사 사이 공복 */}
                         {index < meals.length - 1 && (
-                          <div className="flex items-center ml-5 my-2">
+                          <div className="flex items-center ml-5 ">
                             <img
                               src="/images/mark.png"
                               alt="공복 타임라인"
                               className="h-12 mr-2"
                             />
                             {meal.fastingTime && (
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-gray-500 font-semibold">
                                 공복시간: {meal.fastingTime}
                               </span>
                             )}
