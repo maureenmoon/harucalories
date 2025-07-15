@@ -44,7 +44,7 @@ function Menu() {
             <div className="absolute left-1/2 transform -translate-x-1/2 hidden group-hover:block bg-white shadow-lg p-2  w-[100px]   ">
               <span className="flex flex-col text-black items-center text-center gap-2">
                 <Link to="/haruReport/record">기록습관</Link>
-                <Link to="/haruReport/nutrition">영양기록</Link>
+                <Link to="/haruReport/nutrition">영양습관</Link>
               </span>
             </div>
           </li>
