@@ -1,92 +1,71 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login } from "../../slices/loginSlice";
+import { validateEmail, validatePassword } from "../../utils/auth/validatos";
+import FormInput from "../../components/mypage/FormInput";
 
-const init = {
-  email: "",
-  password: "",
-};
-
-function Login() {
-  const [loginParam, setLoginParam] = useState({ ...init });
-
+export default function Login() {
   const dispatch = useDispatch();
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(name, value);
-    setLoginParam({ ...loginParam, [name]: value });
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // const handleSubmit = (e) => {
-  const handleSubmit = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    console.log("로그인 정보 : ", loginParam);
-    // dispatch(login(loginParam));
 
-    //✅ replace this block with actual API call
-    //const response = awiat axios.post("api/login",loginParam)
-    //dispatch(login(response.data))
-    const mockUserDataFromApi = {
+    if (!validateEmail(form.email))
+      return alert("이메일 형식이 잘못되었습니다.");
+    if (!validatePassword(form.password))
+      return alert("비밀번호 형식이 잘못되었습니다.");
+
+    // Temporary: mock user info
+    const mockUser = {
+      email: form.email,
+      nickname: "toby",
       userid: 1,
-      email: loginParam.email,
-      nickname: "sora17",
-      name: "안소라",
-      height: 163,
+      name: "문연순",
+      height: 160,
       weight: 55,
       targetCalories: 2100,
-      activityLevel: "medium",
-      photo: "", // or URL
+      activityLevel: "활동적",
+      photo: "",
     };
-    dispatch(login(mockUserDataFromApi));
-    // Navigate("/");
 
-    //mock testing
-    Navigate("/mypage/profile");
+    dispatch(login(mockUser));
+    navigate("/");
   };
 
   return (
-    <div className="bg-blue-200 h-[calc(100vh-56px)] flex justify-center items-center px-4">
-      <div className="w-full sm:w-100 hidden sm:block   bg-gray-200 px-6 py-8 rounded-3xl shadow-2xl">
-        <h3 className="text-3xl font-bold mb-4">Login</h3>
-        <fieldset className="fieldset">
-          <legend className="fieldset-legend">이메일</legend>
-          <input
-            type="text"
-            className="input w-full"
-            placeholder="이메일입력"
+    <div className="flex justify-center items-start min-h-screen pt-24 px-4 bg-white">
+      <div className="w-full max-w-sm bg-white rounded-xl shadow-md p-6 sm:p-8">
+        <h2 className="text-2xl font-bold mb-6 text-center">로그인</h2>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <FormInput
             name="email"
+            value={form.email}
             onChange={handleChange}
-            value={loginParam?.email}
+            placeholder="이메일"
           />
-        </fieldset>
-        <fieldset className="fieldset mb-4">
-          <legend className="fieldset-legend ">비밀번호</legend>
-          <input
-            type="password"
-            className="input w-full"
-            placeholder="패스워드입력"
+          <FormInput
             name="password"
+            type="password"
+            value={form.password}
             onChange={handleChange}
-            value={loginParam?.password}
+            placeholder="비밀번호"
           />
-        </fieldset>
-        <button className="btn btn-primary w-full mb-4" onClick={handleSubmit}>
-          {" "}
-          로그인
-        </button>
-
-        <div className="flex justify-between ">
-          <div className="text-sm text-gray-600">아이디/비밀번호찾기</div>
-          <div className="text-sm text-gray-600">
-            <Link to="../signup">회원가입</Link>
-          </div>
-        </div>
+          <button
+            type="submit"
+            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            로그인
+          </button>
+        </form>
       </div>
     </div>
   );
 }
-
-export default Login;

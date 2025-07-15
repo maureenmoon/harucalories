@@ -1,78 +1,100 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { editProfile } from "../../slices/loginSlice";
+import FormInput from "../../components/mypage/FormInput";
+import FormSelect from "../../components/mypage/FormSelect";
+import calculateCalories from "../../components/mypage/calculateCalories";
 
 export default function EditProfile() {
+  const user = useSelector((state) => state.loginSlice);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    nickname: "toby",
-    name: "Toby Kim",
-    height: 163,
-    weight: 55,
-    activityLevel: "매우 활동적",
-    targetCalories: 2100,
-    photo: null,
+    name: user.name || "",
+    height: user.height || "",
+    weight: user.weight || "",
+    activityLevel: user.activityLevel || "MEDIUM",
+    birthAt: user.birthAt || "",
+    gender: user.gender || "FEMALE",
   });
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setForm({
-      ...form,
-      [name]: files ? files[0] : value,
-    });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    console.log("Submitting:", form);
-    // Add API call here
-    alert("Updated successfully!");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newCalories = calculateCalories(form);
+    dispatch(editProfile({ ...form, targetCalories: newCalories }));
+    navigate("/mypage/profile");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 text-sm sm:text-base">
-      <div>
-        <label className="block font-semibold mb-1">Profile Photo</label>
-        <input
-          type="file"
-          name="photo"
-          onChange={handleChange}
-          className="w-full"
-        />
-      </div>
-
-      {["nickname", "name", "height", "weight", "targetCalories"].map(
-        (field) => (
-          <div key={field}>
-            <label className="block font-semibold mb-1 capitalize">
-              {field}
-            </label>
-            <input
-              name="field"
-              value={form[field]}
-              onChange={handleChange}
-              type="text"
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-        )
-      )}
-      <div>
-        <label className="block font-semibold mb-1">Activity Level</label>
-        <select
-          name="activityLevel"
-          value={form.activityLevel}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2"
+    <div className="flex justify-center px-4 py-8 sm:px-8 lg:px-16">
+      <div className="bg-white rounded-xl shadow-md w-full max-w-3xl p-6 sm:p-10">
+        <h2 className="text-2xl font-semibold mb-6 text-center">프로필 수정</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormInput
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="이름"
+          />
+          <FormInput
+            name="birthAt"
+            type="date"
+            value={form.birthAt}
+            onChange={handleChange}
+            placeholder="생년월일"
+          />
+          <FormSelect
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+            options={[
+              { value: "FEMALE", label: "여성" },
+              { value: "MALE", label: "남성" },
+            ]}
+          />
+          <FormInput
+            name="height"
+            value={form.height}
+            onChange={handleChange}
+            placeholder="키 (cm)"
+          />
+          <FormInput
+            name="weight"
+            value={form.weight}
+            onChange={handleChange}
+            placeholder="몸무게 (kg)"
+          />
+          <FormSelect
+            name="activityLevel"
+            value={form.activityLevel}
+            onChange={handleChange}
+            options={[
+              { value: "LOW", label: "조금 활동적" },
+              { value: "MEDIUM", label: "활동적" },
+              { value: "HIGH", label: "매우 활동적" },
+            ]}
+          />
+          <button
+            type="submit"
+            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            저장
+          </button>
+        </form>
+        <button
+          onClick={() => navigate("/")}
+          className="mt-6 w-full py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
         >
-          <option value="high">매우 활동적</option>
-          <option value="medium">활동적</option>
-          <option value="low">조금 활동적</option>
-        </select>
+          메인 페이지로 이동
+        </button>
       </div>
-
-      <button
-        type="submit"
-        className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded "
-      >
-        저장
-      </button>
-    </form>
+    </div>
   );
 }

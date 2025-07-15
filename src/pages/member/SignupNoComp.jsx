@@ -6,15 +6,17 @@ import {
   validatePassword,
 } from "../../utils/auth/validatos";
 import { useNavigate } from "react-router-dom";
-import FormInput from "../../components/mypage/FormInput";
-import FormSelect from "../../components/mypage/FormSelect";
-import calculateCalories from "../../components/mypage/calculateCalories";
+import { useDispatch } from "react-redux";
+import { login } from "../../slices/loginSlice";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [isComplete, setIsComplete] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const [isComplete, setIsComplete] = useState(false); //Hooks must be called inside the comp
   const [calories, setCalories] = useState(0);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1: basic info, 2: extra info
 
   const [form, setForm] = useState({
     email: "",
@@ -23,15 +25,18 @@ export default function Signup() {
     nickname: "",
     name: "",
     birthAt: "",
-    gender: "FEMALE",
+    gender: "여성",
     height: "",
     weight: "",
-    activityLevel: "MEDIUM",
+    activityLevel: "활동적",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prevForm) => ({ ...prevForm, [name]: value }));
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
   };
 
   const handleSubmitStep1 = async (e) => {
@@ -67,15 +72,62 @@ export default function Signup() {
       const dailyCalories = calculateCalories(form);
       setCalories(dailyCalories);
 
+      //dispatch to redux
+      dispatch(
+        login({
+          email: form.email,
+          // password: form.password, // optional
+          nickname: form.nickname,
+          name: form.name,
+          birthAt: form.birthAt,
+          gender: form.gender,
+          height: parseFloat(form.height),
+          weight: parseFloat(form.weight),
+          activityLevel: form.activityLevel,
+          targetCalories: dailyCalories,
+          photo: "", // if photo uploading is added later
+        })
+      );
+
+      //save globally until bk-end is ready
       localStorage.setItem("dailyCalories", dailyCalories);
       localStorage.setItem("nickname", form.nickname);
 
       setIsComplete(true);
+      // setTimeout(() => navigate("/"), 800);//redirect to main page in 0.8sec
       console.log(result);
     } catch (err) {
       alert("서버 오류 또는 잘못된 입력입니다.");
       console.log(err);
     }
+  };
+
+  const calculateCalories = ({
+    birthAt,
+    gender,
+    height,
+    weight,
+    activityLevel,
+  }) => {
+    const birthDate = new Date(birthAt);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+
+    const h = parseFloat(height);
+    const w = parseFloat(weight);
+    let bmr;
+    if (gender === "남성" || gender === "MALE") {
+      bmr = 10 * w + 6.25 * h - 5 * age + 5;
+    } else {
+      bmr = 10 * w + 6.25 * h - 5 * age - 161;
+    }
+    let activityFactor = 1.55;
+    if (activityLevel === "조금 활동적" || activityLevel === "LOW")
+      activityFactor = 1.375;
+    else if (activityLevel === "매우 활동적" || activityLevel === "HIGH")
+      activityFactor = 1.725;
+
+    return Math.round(bmr * activityFactor);
   };
 
   return (
@@ -87,33 +139,33 @@ export default function Signup() {
           <>
             <h2 className="text-2xl font-bold mb-6 text-center">회원가입</h2>
             <form onSubmit={handleSubmitStep1} className="space-y-4">
-              <FormInput
+              <Input
                 name="email"
                 value={form.email}
                 onChange={handleChange}
                 placeholder="이메일"
               />
-              <FormInput
+              <Input
                 name="password"
                 type="password"
                 value={form.password}
                 onChange={handleChange}
                 placeholder="비밀번호"
               />
-              <FormInput
+              <Input
                 name="passwordConfirm"
                 type="password"
                 value={form.passwordConfirm}
                 onChange={handleChange}
                 placeholder="비밀번호 확인"
               />
-              <FormInput
+              <Input
                 name="nickname"
                 value={form.nickname}
                 onChange={handleChange}
                 placeholder="닉네임"
               />
-              <FormInput
+              <Input
                 name="name"
                 value={form.name}
                 onChange={handleChange}
@@ -133,7 +185,7 @@ export default function Signup() {
               추가 정보 입력
             </h2>
             <form onSubmit={handleSubmitFinal} className="space-y-4">
-              <FormSelect
+              <Select
                 name="gender"
                 value={form.gender}
                 onChange={handleChange}
@@ -142,14 +194,14 @@ export default function Signup() {
                   { value: "MALE", label: "남성" },
                 ]}
               />
-              <FormInput
+              <Input
                 name="birthAt"
                 type="date"
                 value={form.birthAt}
                 onChange={handleChange}
                 placeholder="생년월일"
               />
-              <FormSelect
+              <Select
                 name="activityLevel"
                 value={form.activityLevel}
                 onChange={handleChange}
@@ -159,13 +211,13 @@ export default function Signup() {
                   { value: "LOW", label: "낮음" },
                 ]}
               />
-              <FormInput
+              <Input
                 name="height"
                 value={form.height}
                 onChange={handleChange}
                 placeholder="키 (cm)"
               />
-              <FormInput
+              <Input
                 name="weight"
                 value={form.weight}
                 onChange={handleChange}
@@ -185,6 +237,35 @@ export default function Signup() {
   );
 }
 
+// Reusable Input
+const Input = ({ name, type = "text", placeholder, value, onChange }) => (
+  <input
+    name={name}
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    onChange={onChange}
+    className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+);
+
+// Reusable Select
+const Select = ({ name, value, onChange, options }) => (
+  <select
+    name={name}
+    value={value}
+    onChange={onChange}
+    className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    {options.map((opt) => (
+      <option key={opt.value} value={opt.value}>
+        {opt.label}
+      </option>
+    ))}
+  </select>
+);
+
+// Confirmation Screen
 const ConfirmationScreen = ({ name, calories }) => {
   const navigate = useNavigate();
   const handleStart = () => navigate("/");
