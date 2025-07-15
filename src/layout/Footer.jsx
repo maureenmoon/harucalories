@@ -17,7 +17,7 @@ function Footer() {
           © 하이미디어 구로캠버스 자바 풀스택 AI 융합 웹개발
         </p>
       </div> */}
-      <footer className="footer sm:footer-horizontal bg-base-200 text-base-content p-10">
+      <footer className="w-[1020px] footer sm:footer-horizontal bg-base-200 text-base-content container mx-auto p-10">
         <nav>
           <h6 className="footer-title">회사 소개</h6>
           <a className="link link-hover">Harukcal 소개</a>
@@ -39,7 +39,7 @@ function Footer() {
           <a className="link link-hover">쿠키 정책</a>
         </nav>
       </footer>
-      <footer className="footer bg-base-200 text-base-content border-base-300 border-t px-10 py-4">
+      <footer className="w-[1020px] footer bg-base-200 text-base-content border-base-300 container mx-auto border-t px-10 py-4">
         <aside className="grid-flow-col items-center">
           {/* <img src="public/haru.svg" alt="" className="w-10" /> */}
           <p>
