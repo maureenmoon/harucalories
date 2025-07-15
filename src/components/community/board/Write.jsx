@@ -36,7 +36,7 @@ function Write() {
       <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-4">
         <Link to="/community" className="hidden md:block mb-3 ">
           <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
-            커뮤니티>
+            커뮤니티
           </p>
         </Link>
         <h1 className="text-[18px] md:text-xl font-semibold text-center md:text-left mt-0 md:mt-0">

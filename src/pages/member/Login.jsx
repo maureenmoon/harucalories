@@ -41,8 +41,10 @@ function Login() {
       photo: "", // or URL
     };
     dispatch(login(mockUserDataFromApi));
+    // Navigate("/");
 
-    Navigate("/");
+    //mock testing
+    Navigate("/mypage/profile");
   };
 
   return (

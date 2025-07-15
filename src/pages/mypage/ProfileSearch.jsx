@@ -1,16 +1,21 @@
-export default function ProfileSearch() {
-  const profile = {
-    nickname: "toby",
-    email: "toby@naver.com",
-    targetCalories: 2100,
-    activityLevel: "매우 활동적",
-    name: "Toby Kim",
-    height: 163,
-    weight: 55,
-    photo: "", // or use base64/file url
-  };
+import { useSelector } from "react-redux";
 
-  const getInitial = (nickname) => nickname.charAt(0).toUpperCase();
+export default function ProfileSearch() {
+  // const profile = {
+  //   nickname: "toby",
+  //   email: "toby@naver.com",
+  //   targetCalories: 2100,
+  //   activityLevel: "매우 활동적",
+  //   name: "Toby Kim",
+  //   height: 163,
+  //   weight: 55,
+  //   photo: "", // or use base64/file url
+  // }
+  // const getInitial = (nickname) => nickname.charAt(0).toUpperCase();
+
+  //mock tesing
+  const user = useSelector((state) => state.loginSlice); //loginSlice named at loginSlice.js
+  if (!user || !user.nickname) return <div>Loading...</div>;
 
   return (
     <div className="flex flex-col items-center gap-4 sm:gap-6 text-center">
