@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import configureStore from "../../store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { setSelectedMeal } from "../../slices/mealSlice";
 
 function MealPickerModal() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { selectedMeal, setSelectedMeal } = configureStore();
+  const dispatch = useDispatch();
+  const selectedMeal = useSelector((state) => state.meal.selectedMeal);
 
   const meals = ["아침", "점심", "저녁", "간식"];
 
@@ -35,7 +37,7 @@ function MealPickerModal() {
                   className={`btn btn-ghost border-none ${
                     selectedMeal === meal ? "text-purple-500 font-bold" : ""
                   }`}
-                  onClick={() => setSelectedMeal(meal)}
+                  onClick={() => dispatch(setSelectedMeal(meal))}
                 >
                   {meal}
                 </button>
