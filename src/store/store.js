@@ -4,7 +4,7 @@ import mealSlice from "../slices/mealSlice";
 
 const store = configureStore({
   reducer: {
-    login: loginSlice.reducer,
+    loginSlice: loginSlice.reducer,
     meal: mealSlice.reducer,
   },
 });
