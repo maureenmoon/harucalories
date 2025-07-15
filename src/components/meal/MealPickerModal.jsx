@@ -1,8 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { setSelectedMeal } from "../../slices/mealSlice";
 
 function MealPickerModal() {
-  const [selectedMeal, setSelectedMeal] = useState("");
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const selectedMeal = useSelector((state) => state.meal.selectedMeal);
 
   const meals = ["아침", "점심", "저녁", "간식"];
 
@@ -10,12 +15,13 @@ function MealPickerModal() {
     if (!selectedMeal) return alert("식사 타입을 선택하세요.");
     console.log("선택한 식사 타입:", selectedMeal);
     setOpen(false);
+    navigate("/Analyis");
   };
 
   return (
-    <div>
+    <div className="fixed bottom-6 right-6 z-50">
       <button
-        className="btn btn-primary rounded-full bg-purple-500 text-lg border-none w-12 h-12 flex items-center justify-center"
+        className="btn text-white rounded-full bg-purple-500 text-2xl border-none w-13 h-13 flex items-center justify-center"
         onClick={() => setOpen(true)}
       >
         +
@@ -31,7 +37,7 @@ function MealPickerModal() {
                   className={`btn btn-ghost border-none ${
                     selectedMeal === meal ? "text-purple-500 font-bold" : ""
                   }`}
-                  onClick={() => setSelectedMeal(meal)}
+                  onClick={() => dispatch(setSelectedMeal(meal))}
                 >
                   {meal}
                 </button>
@@ -55,4 +61,5 @@ function MealPickerModal() {
     </div>
   );
 }
+
 export default MealPickerModal;

@@ -50,12 +50,14 @@ function Meal() {
   return (
     <>
       <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
-        {/* 날짜 */}
-        <div className="text-center text-lg sm:text-2xl font-bold">
-          25-06-25 (수)
+        <div className="flex gap-4 items-center justify-center">
+          <div className="text-center text-lg sm:text-2xl font-bold">〈</div>
+          <div className="text-center text-lg sm:text-2xl font-bold">
+            25-06-25 (수)
+          </div>
+          <div className="text-center text-lg sm:text-2xl font-bold">〉</div>
         </div>
 
-        {/* 총 섭취량 */}
         <div className="card bg-base-100 shadow-lg p-4 px-0 sm:px-40">
           <div className="text-md mb-4">
             <span className="font-bold">총 섭취량</span>{" "}
@@ -63,7 +65,6 @@ function Meal() {
             {calorieGoal}kcal
           </div>
 
-          {/* 전체 progress bar */}
           <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
             <div
               className="bg-purple-500 h-4 rounded-full"
@@ -123,7 +124,7 @@ function Meal() {
         <h2 className="m-0 text-lg sm:text-2xl font-bold">식사기록</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((_, i) => (
-            <Link to="/Analyis">
+            <Link to="/Result" key={i}>
               <div
                 key={i}
                 className="card bg-base-100 w-full rounded-xl shadow-lg p-[20px]"

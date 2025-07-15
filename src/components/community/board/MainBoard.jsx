@@ -51,11 +51,12 @@ function MainBoard() {
     : sortedPosts;
 
   return (
-    <div className="p-4 sm:p-6 container mx-auto  sm:w-[1020px]">
-      <div className="flex flex-col items-start text-gray-500 md:flex-row md:items-start">
-        <Link to="/community" className="hidden md:block mb-3">
-          <p className="text-lg sm:text-2xl font-semibold hover:underline cursor-pointer">
-            커뮤니티{">"}
+<div className="w-[1020px] mx-auto">
+      <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-8">
+        <Link to="/community" className="hidden md:block mb-3 ">
+          <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
+            커뮤니티
+
           </p>
         </Link>
         <h1 className="text-lg sm:text-2xl font-semibold mb-3">자유게시판</h1>

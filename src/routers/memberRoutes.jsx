@@ -1,5 +1,6 @@
 import Login from "../pages/member/Login";
 import Signup from "../pages/member/Signup";
+import MyPage from "../pages/mypage/MyPage";
 
 const memberRoutes = [
   {

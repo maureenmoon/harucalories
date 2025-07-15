@@ -1,10 +1,7 @@
 import React from "react";
 import SubLayout from "../../layout/SubLayout";
-import { useSelector } from "react-redux";
 
-function Analyis() {
-  const selectedMeal = useSelector((state) => state.meal.selectedMeal);
-
+function Result() {
   return (
     <>
       <SubLayout to={"/"} menu={"식단분석"} label={"식사요약"} />
@@ -23,8 +20,7 @@ function Analyis() {
           />
           <input
             type="text"
-            value={selectedMeal}
-            readOnly
+            placeholder="아침"
             className="input input-bordered flex-1 text-center"
           />
         </div>
@@ -63,4 +59,4 @@ function Analyis() {
   );
 }
 
-export default Analyis;
+export default Result;
