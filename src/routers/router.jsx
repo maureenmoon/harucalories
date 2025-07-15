@@ -7,6 +7,7 @@ import communityRoutes from "./communityRoutes";
 import MyPage from "../pages/mypage/MyPage";
 import memberRoutes from "./memberRoutes";
 import Result from "../pages/meal/result";
+import mypageRoutes from "./mypageRoutes";
 
 const root = createBrowserRouter([
   {
@@ -46,13 +47,14 @@ const root = createBrowserRouter([
   {
     path: "/mypage",
     element: <RootLayout />,
-    children: [
-      {
-        // path: "/mypage",
-        path: "",
-        element: <MyPage />,
-      },
-    ],
+    children: mypageRoutes,
+    // children: [
+    //   {
+    //     // path: "/mypage",
+    //     path: "",
+    //     element: <MyPage />,
+    //   },
+    // ],
   },
 ]);
 
