@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useMealStore from "../../store/mealStore";
+import configureStore from "../../store/store";
 
 function MealPickerModal() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { selectedMeal, setSelectedMeal } = useMealStore();
+  const { selectedMeal, setSelectedMeal } = configureStore();
 
   const meals = ["아침", "점심", "저녁", "간식"];
 
