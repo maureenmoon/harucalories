@@ -126,7 +126,7 @@ function Record() {
         type: "아침",
         createDate: "2025-07-17T08:30:00",
         updateDate: "2025-07-17T08:30:00",
-        imageUrl: "https://example.com/image4.jpg",
+        imageUrl: "/images/food_6.jpg",
         memo: "건강한 아침 식사",
         totalKcal: "420",
         fastingTime: "14시간",
@@ -171,7 +171,7 @@ function Record() {
         type: "간식",
         createDate: "2025-07-17T15:30:00",
         updateDate: "2025-07-17T15:30:00",
-        imageUrl: "https://example.com/image5.jpg",
+        imageUrl: "/images/food_5.jpg",
         memo: "오후 간식",
         totalKcal: "200",
         fastingTime: "3시간",
@@ -205,7 +205,7 @@ function Record() {
         type: "점심",
         createDate: "2025-07-18T12:00:00",
         updateDate: "2025-07-18T12:00:00",
-        imageUrl: "https://example.com/image6.jpg",
+        imageUrl: "/images/food_7.jpg",
         memo: "비오는 날 국물 요리",
         totalKcal: "780",
         fastingTime: "4시간",
@@ -239,7 +239,7 @@ function Record() {
         type: "저녁",
         createDate: "2025-07-17T19:00:00",
         updateDate: "2025-07-17T19:00:00",
-        imageUrl: "https://example.com/image7.jpg",
+        imageUrl: "/images/food_4.jpg",
         memo: "저녁 식사",
         totalKcal: "650",
         fastingTime: "4시간",
@@ -306,14 +306,6 @@ function Record() {
         return [...prev, date];
       }
     });
-  };
-
-  // 월 변경 핸들러
-  const handleMonthChange = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    // TODO: 해당 월의 데이터를 불러오는 API 호출
-    console.log(`${year}년 ${month}월 데이터 로딩`);
   };
 
   // 식사 통계 계산
@@ -383,12 +375,106 @@ function Record() {
 
       {selectedDates.length > 0 && (
         <div className="mt-8 mb-14">
-          <h2 className="text-xl font-bold mb-4 text-gray-700">
-            선택된 날짜의 식사 기록
+          <h2 className="text-xl font-bold mb-4 text-gray-700 ml-2">
+            |선택된 날짜의 식사 기록
           </h2>
-          {getSelectedMeals().map((meal) => (
-            <MealCard key={meal.id} meal={meal} />
-          ))}
+
+          {/* 날짜별로 그룹핑 */}
+          {(() => {
+            const grouped = getSelectedMeals().reduce((acc, meal) => {
+              const dateKey = new Date(meal.createDate).toLocaleDateString(
+                "ko-KR",
+                {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                }
+              );
+              if (!acc[dateKey]) acc[dateKey] = [];
+              acc[dateKey].push(meal);
+              return acc;
+            }, {});
+
+            const sortedDates = Object.keys(grouped).sort(
+              (a, b) => new Date(b) - new Date(a)
+            );
+
+            return sortedDates.map((date, idx) => {
+              const meals = grouped[date].sort(
+                (a, b) => new Date(b.createDate) - new Date(a.createDate)
+              );
+
+              // 이전 날짜 마지막 식사 ↔ 현재 날짜 첫 식사
+              const prevDate = sortedDates[idx - 1];
+              const prevLastMeal = prevDate
+                ? grouped[prevDate][grouped[prevDate].length - 1]
+                : null;
+              const currentFirstMeal = meals[0];
+
+              // 공복 시간 계산
+              let fastingGap = null;
+              if (prevLastMeal && currentFirstMeal) {
+                const gapHours =
+                  Math.abs(
+                    new Date(prevLastMeal.createDate) -
+                      new Date(currentFirstMeal.createDate)
+                  ) /
+                  (1000 * 60 * 60); // 시간 단위
+
+                fastingGap =
+                  gapHours % 1 === 0
+                    ? gapHours.toFixed(0)
+                    : gapHours.toFixed(1);
+              }
+
+              return (
+                <React.Fragment key={date}>
+                  {/* 날짜 간 공복 구간 표시 */}
+                  {idx > 0 && fastingGap && (
+                    <div className="flex items-center ml-5 my-4">
+                      <img
+                        src="/images/mark.png"
+                        alt="날짜 사이 공복 타임라인"
+                        className="h-12 mr-2"
+                      />
+                      <span className="text-sm text-purple-600 font-semibold">
+                        공복시간: {fastingGap}시간
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 날짜별 카드 묶음 */}
+                  <div className="mb-4 border border-gray-300 rounded-2xl p-4 bg-white shadow">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-1 mr-3 flex justify-end">
+                      {date}
+                    </h3>
+
+                    {meals.map((meal, index) => (
+                      <div key={meal.mealId} className="relative">
+                        <MealCard meal={meal} />
+
+                        {/* 같은 날짜 내 식사 사이 공복 */}
+                        {index < meals.length - 1 && (
+                          <div className="flex items-center ml-5 my-2">
+                            <img
+                              src="/images/mark.png"
+                              alt="공복 타임라인"
+                              className="h-12 mr-2"
+                            />
+                            {meal.fastingTime && (
+                              <span className="text-sm text-gray-500">
+                                공복시간: {meal.fastingTime}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </React.Fragment>
+              );
+            });
+          })()}
         </div>
       )}
     </div>

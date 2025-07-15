@@ -20,10 +20,10 @@ function MealCard({ meal }) {
   };
 
   return (
-    <div className="bg-purple-50 rounded-2xl p-4 mb-4 shadow-sm">
+    <div className="bg-purple-50 rounded-2xl p-4 mb-2 shadow-sm">
       <div>
-        <div className="flex items-start gap-4">
-          <div className="w-32 h-32 bg-gray-200 rounded-lg overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className="w-30 h-30 bg-gray-200 rounded-lg overflow-hidden">
             {meal.imageUrl && (
               <img
                 src={meal.imageUrl}
@@ -33,37 +33,28 @@ function MealCard({ meal }) {
             )}
           </div>
 
-          <div className="flex-1">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h3 className="text-lg font-semibold">
-                  {meal.type}
-                  <span className="text-sm font-normal ml-2 text-gray-600">
-                    {formatTime(meal.createDate)}
-                  </span>
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {formatDate(meal.createDate)}
-                </p>
-              </div>
+          <div className="flex-1 ">
+            <div className="flex justify-between items-center mb-2 ">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {meal.type}
+                <span className="text-sm font-normal ml-1 text-gray-600">
+                  {formatTime(meal.createDate)}
+                </span>
+              </h3>
+
               <div className="text-right">
                 <p className="text-lg font-semibold">{meal.totalKcal}kcal</p>
-                {meal.fastingTime && (
-                  <p className="text-sm text-gray-600">
-                    공복시간: {meal.fastingTime}
-                  </p>
-                )}
               </div>
             </div>
 
             {meal.foods.length > 0 && (
               <div className="mb-2">
-                <h4 className="font-semibold mb-1">섭취 음식</h4>
+                <h4 className="font-semibold mb-1 text-gray-800">섭취 음식</h4>
                 <div className="flex flex-wrap gap-2">
                   {meal.foods.map((food) => (
                     <span
                       key={food.foodId}
-                      className="bg-gray-100 px-2 py-1 rounded text-sm"
+                      className="bg-white px-2 py-1 rounded text-xs"
                     >
                       {food.foodName} ({food.kcal}kcal)
                     </span>
