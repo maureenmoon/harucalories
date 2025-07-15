@@ -1,9 +1,10 @@
 import React from "react";
 import SubLayout from "../../layout/SubLayout";
-import useMealStore from "../../store/mealStore";
+import { useSelector } from "react-redux";
 
 function Analyis() {
-  const { selectedMeal } = useMealStore();
+  const selectedMeal = useSelector((state) => state.meal.selectedMeal);
+
   return (
     <>
       <SubLayout to={"/"} menu={"식단분석"} label={"식사요약"} />
