@@ -113,7 +113,7 @@ function Analyis() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-base">
-            {[
+            {/* {[
               ["탄수화물", resultData?.carbs],
               ["단백질", resultData?.protein],
               ["지방", resultData?.fat],
@@ -125,7 +125,7 @@ function Analyis() {
                 </div>
                 <span>{label}</span>
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
 
