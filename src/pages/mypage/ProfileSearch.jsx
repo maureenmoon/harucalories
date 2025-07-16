@@ -58,7 +58,7 @@ export default function ProfileSearch() {
         <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
           <button
             onClick={() => navigate("/mypage/withdraw")}
-            className="px-4 py-2 rounded border border-blue-500 text-blue-600 font-semibold hover:bg-blue-50"
+            className="px-4 py-2 rounded border border-blue-500 text-red-400 font-semibold hover:bg-blue-50"
           >
             탈퇴하기
           </button>
@@ -67,6 +67,12 @@ export default function ProfileSearch() {
             className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
           >
             수정
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className="px-4 py-2 rounded border border-blue-500 text-blue-600 font-semibold hover:bg-blue-50"
+          >
+            메인 페이지
           </button>
         </div>
       </div>

@@ -15,9 +15,9 @@ export default function EditProfile() {
     name: user.name || "",
     height: user.height || "",
     weight: user.weight || "",
-    activityLevel: user.activityLevel || "MEDIUM",
+    activityLevel: user.activityLevel || "활동적",
     birthAt: user.birthAt || "",
-    gender: user.gender || "FEMALE",
+    gender: user.gender || "여성",
   });
 
   const handleChange = (e) => {
@@ -81,19 +81,21 @@ export default function EditProfile() {
               { value: "HIGH", label: "매우 활동적" },
             ]}
           />
+        </form>
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className=" px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
           >
             저장
           </button>
-        </form>
-        <button
-          onClick={() => navigate("/")}
-          className="mt-6 w-full py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
-        >
-          메인 페이지로 이동
-        </button>
+          <button
+            onClick={() => navigate("/")}
+            className=" py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-100"
+          >
+            메인 페이지
+          </button>
+        </div>
       </div>
     </div>
   );
