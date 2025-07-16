@@ -1,122 +1,111 @@
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Legend,
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from "recharts";
 
 const NutritionBalanceChart = ({ period }) => {
-  const containerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
-
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
-  }, []);
-
   // 임시 데이터 (나중에 API로 대체)
   const data = [
-    { nutrient: "탄수화물", amount: 120, percentage: 80, recommended: 150 },
-    { nutrient: "단백질", amount: 80, percentage: 90, recommended: 89 },
-    { nutrient: "지방", amount: 45, percentage: 75, recommended: 60 },
-    { nutrient: "나트륨", amount: 1500, percentage: 65, recommended: 2300 },
-    { nutrient: "식이섬유", amount: 15, percentage: 60, recommended: 25 },
+    { nutrient: "탄수화물", amount: 54.0, unit: "g", percentage: 80 },
+    { nutrient: "단백질", amount: 16.0, unit: "g", percentage: 50 },
+    { nutrient: "지방", amount: 10.0, unit: "g", percentage: 40 },
+    { nutrient: "나트륨", amount: 689.0, unit: "mg", percentage: 30 },
+    { nutrient: "콜레스테롤", amount: 74.0, unit: "mg", percentage: 47 },
   ];
 
   const radarData = data.map((item) => ({
     subject: item.nutrient,
-    A: item.percentage,
+    value: Math.min(item.percentage, 100), // 100%를 넘어가는 경우 100%로 제한
     fullMark: 100,
   }));
 
-  const CustomBarTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const item = data.find((d) => d.nutrient === label);
-      return (
-        <div className="bg-white p-2 border rounded shadow">
-          <p className="font-semibold">{label}</p>
-          <p>섭취량: {item.amount}g</p>
-          <p>권장량: {item.recommended}g</p>
-          <p>달성률: {item.percentage}%</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <div ref={containerRef}>
+    <div className="w-full">
       {/* 레이더 차트 */}
-      <div className="w-full h-[250px] mb-8">
+      <div className="h-[250px] ">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
             <PolarGrid />
             <PolarAngleAxis dataKey="subject" />
-            <PolarRadiusAxis angle={30} domain={[0, 100]} />
             <Radar
               name="영양소 균형"
-              dataKey="A"
+              dataKey="value"
               stroke="#8884d8"
               fill="#8884d8"
               fillOpacity={0.6}
             />
-            <Legend />
           </RadarChart>
         </ResponsiveContainer>
       </div>
 
       {/* 영양소 막대 그래프 */}
-      <div className="w-full">
-        <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              layout="vertical"
-              barSize={20}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" domain={[0, 100]} unit="%" />
-              <YAxis dataKey="nutrient" type="category" width={80} />
-              <Tooltip content={<CustomBarTooltip />} />
-              <Bar
-                dataKey="percentage"
-                fill="#8884d8"
-                name="달성률"
-                radius={[0, 4, 4, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      <div className="h-[300px] mb-6">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              horizontal={true}
+              vertical={false}
+            />
+            <XAxis dataKey="nutrient" axisLine={false} tickLine={false} />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              domain={[0, 100]}
+              ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+            />
+            <Bar
+              dataKey="percentage"
+              fill="#8884d8"
+              label={{
+                position: "top",
+                formatter: (value) => `${value}%`,
+                fill: "#666",
+                fontSize: 12,
+              }}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
 
-        {/* 영양소 수치 표 */}
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-          {data.map((item, index) => (
-            <div key={index} className="bg-gray-50 p-2 rounded">
-              <p className="font-semibold">{item.nutrient}</p>
-              <p>
-                {item.amount}g / {item.recommended}g
-              </p>
-            </div>
-          ))}
-        </div>
+      {/* 영양소 수치 표 */}
+      <div className="w-full">
+        <table className="w-full text-center">
+          <thead className="bg-gray-100">
+            <tr>
+              {data.map((item, index) => (
+                <th
+                  key={index}
+                  className="py-4 px-4 text-gray-600 font-normal text-sm"
+                >
+                  {item.nutrient}({item.unit})
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {data.map((item, index) => (
+                <td key={index} className="py-3 px-4 text-gray-800">
+                  {item.amount}
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );

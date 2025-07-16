@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import SearchBar from "./SearchBar";
+import SubLayout from "../../../layout/SubLayout";
 
 function MainBoard() {
   const [posts, setPosts] = useState(() => {
@@ -8,8 +9,8 @@ function MainBoard() {
     return stored ? JSON.parse(stored) : [];
   });
 
-  const [searchInput, setSearchInput] = useState(""); // 사용자가 입력 중인 검색어
-  const [searchKeyword, setSearchKeyword] = useState(""); // 버튼 누른 뒤 확정된 키워드
+  const [searchInput, setSearchInput] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const handleSearch = () => {
     setSearchKeyword(searchInput.trim());
@@ -33,17 +34,12 @@ function MainBoard() {
           writer: "김다이어트",
           date: "2025. 07. 11",
         },
-        // ... 필요한 만큼 추가
       ];
       localStorage.setItem("posts", JSON.stringify(dummyPosts));
     }
   }, []);
 
-  const [search, setSearch] = useState("");
-  // ✅ 최신순 정렬
   const sortedPosts = [...posts].sort((a, b) => b.id - a.id);
-
-  // ✅ 검색 필터
   const filteredPosts = searchKeyword
     ? sortedPosts.filter((post) =>
         post.title.toLowerCase().includes(searchKeyword.toLowerCase())
@@ -51,75 +47,104 @@ function MainBoard() {
     : sortedPosts;
 
   return (
-<div className="w-[1020px] mx-auto">
-      <div className="container w-[1020px] pt-4 md:pt-8 pb-4 flex flex-col items-center text-gray-500 md:flex-row md:items-start mt-8">
-        <Link to="/community" className="hidden md:block mb-3 ">
-          <p className="text-[18px] md:text-xl font-semibold hover:underline cursor-pointer">
-            커뮤니티
+    <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
+      <SubLayout to="/community" menu="커뮤니티" label="자유게시판" />
+      <div className="mt-6 sm:mt-10 space-y-6">
+        {/* 상단 검색 섹션 */}
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              전체 게시글
+            </h2>
+            <Link
+              to="/community/board/write"
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 
+                       transition-colors duration-200 text-sm sm:text-base flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              글쓰기
+            </Link>
+          </div>
+          <SearchBar
+            searchInput={searchInput}
+            setSearchInput={setSearchInput}
+            handleSearch={handleSearch}
+          />
+        </div>
 
-          </p>
-        </Link>
-        <h1 className="text-lg sm:text-2xl font-semibold mb-3">자유게시판</h1>
-      </div>
-
-      {/* 검색 */}
-      <div className="w-full px-4 sm:px-0 mb-3">
-        <SearchBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-          handleSearch={handleSearch}
-        />
-      </div>
-
-      {/* 테이블 */}
-      <div className="overflow-x-auto rounded-lg">
-        <table className="table w-full text-center text-sm sm:text-base ">
-          <thead>
-            <tr className="bg-purple-500 text-white ">
-              <th className="hidden sm:table-cell w-[10%]">번호</th>
-              <th className="w-[50%] sm:w-[50%]">제목</th>
-              <th className="w-[25%] sm:w-[20%]">작성자</th>
-              <th className="w-[25%] sm:w-[20%]">작성일</th>
-            </tr>
-          </thead>
-          <tbody className="border-b border-gray-100">
-            {filteredPosts.map((post) => (
-              <tr key={post.id} className="hover">
-                <td className="hidden sm:table-cell">{post.id}</td>
-                <td className="text-left pl-3">
-                  <Link
-                    to={`/community/board/writeview/${post.id}`}
-                    className="hover:underline line-clamp-1"
-                    onClick={() =>
-                      localStorage.setItem("selectedPostId", post.id)
-                    }
+        {/* 게시글 목록 */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-purple-500 text-white">
+                  <th className="hidden sm:table-cell py-4 px-6 text-left w-[10%]">
+                    번호
+                  </th>
+                  <th className="py-4 px-6 text-left w-[50%]">제목</th>
+                  <th className="py-4 px-6 text-left w-[20%]">작성자</th>
+                  <th className="py-4 px-6 text-left w-[20%]">작성일</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredPosts.map((post) => (
+                  <tr
+                    key={post.id}
+                    className="hover:bg-purple-50 transition-colors duration-150"
                   >
-                    {post.title}
-                  </Link>
-                </td>
-                <td className="text-sm sm:text-base">{post.writer}</td>
-                <td className="text-sm sm:text-base">{post.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    <td className="hidden sm:table-cell py-4 px-6 text-gray-600">
+                      {post.id}
+                    </td>
+                    <td className="py-4 px-6">
+                      <Link
+                        to={`/community/board/writeview/${post.id}`}
+                        className="text-gray-900 hover:text-purple-600 transition-colors duration-150 line-clamp-1"
+                        onClick={() =>
+                          localStorage.setItem("selectedPostId", post.id)
+                        }
+                      >
+                        {post.title}
+                      </Link>
+                    </td>
+                    <td className="py-4 px-6 text-gray-600">{post.writer}</td>
+                    <td className="py-4 px-6 text-gray-600">{post.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      {/* 하단 버튼/페이지 */}
-      <div className="flex justify-end">
-        <Link to="/community/board/write">
-          <button className="btn btn-sm bg-purple-500 text-white mt-5 w-full sm:w-auto">
-            글쓰기
-          </button>
-        </Link>
-      </div>
-      <div className="flex items-center mt-8 mb-8 justify-center">
-        <div className="join">
-          <button className="join-item btn btn-sm">«</button>
-          <button className="join-item btn btn-sm">1</button>
-          <button className="join-item btn btn-sm">2</button>
-          <button className="join-item btn btn-sm">3</button>
-          <button className="join-item btn btn-sm">»</button>
+        {/* 페이지네이션 */}
+        <div className="flex justify-center">
+          <div className="join shadow-sm">
+            <button className="join-item btn btn-sm bg-white hover:bg-gray-50 text-gray-600">
+              «
+            </button>
+            <button className="join-item btn btn-sm bg-purple-500 text-white hover:bg-purple-600">
+              1
+            </button>
+            <button className="join-item btn btn-sm bg-white hover:bg-gray-50 text-gray-600">
+              2
+            </button>
+            <button className="join-item btn btn-sm bg-white hover:bg-gray-50 text-gray-600">
+              3
+            </button>
+            <button className="join-item btn btn-sm bg-white hover:bg-gray-50 text-gray-600">
+              »
+            </button>
+          </div>
         </div>
       </div>
     </div>

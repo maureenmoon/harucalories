@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import SubLayout from "../../../layout/SubLayout";
 
 function WriteView() {
   const { id } = useParams();
@@ -20,18 +21,16 @@ function WriteView() {
       id: Date.now(),
       nickname: "내닉네임",
       text: commentText,
-      date: now.toLocaleDateString("ko-KR").replace(/\.$/, ""), // "2025. 7. 14"
+      date: now.toLocaleDateString("ko-KR").replace(/\.$/, ""),
       time: now.toLocaleTimeString("ko-KR", {
         hour: "2-digit",
         minute: "2-digit",
-      }), // "13:45"
+      }),
     };
 
     const updatedComments = [...comments, newComment];
     setComments(updatedComments);
     setCommentText("");
-
-    // ✅ 여기! 게시글 ID 기준으로 localStorage에 저장
     localStorage.setItem(`comments-${id}`, JSON.stringify(updatedComments));
   };
 
@@ -55,12 +54,10 @@ function WriteView() {
   };
 
   useEffect(() => {
-    // 게시글 불러오기
     const allPosts = JSON.parse(localStorage.getItem("posts")) || [];
     const found = allPosts.find((p) => p.id === Number(id));
     setPost(found);
 
-    // ✅ 댓글 불러오기 (key: comments-게시글ID)
     const savedComments =
       JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
     setComments(savedComments);
@@ -76,138 +73,129 @@ function WriteView() {
     );
 
   return (
-    <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
-      {/* 상단 헤더 */}
-      <div className="flex flex-col items-center text-gray-500 md:flex-row md:items-start">
-        <Link to="/community" className="hidden md:block mb-3">
-          <p className="text-lg sm:text-2xl font-semibold hover:underline cursor-pointer">
-            커뮤니티{">"}
-          </p>
-        </Link>
-        <h1 className="text-lg sm:text-2xl font-semibold text-center md:text-left">
-          자유게시판
-        </h1>
-      </div>
-
-      {/* 게시글 내용 */}
-      <div className="relative">
-        {/* 더보기 버튼 (모바일) */}
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          className="absolute right-0 top-0 p-2 sm:hidden"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-            />
-          </svg>
-        </button>
-
-        {/* 더보기 메뉴 (모바일) */}
-        {showMenu && (
-          <div className="absolute right-0 top-10 bg-white shadow-lg rounded-lg z-10 sm:hidden">
-            <div className="flex flex-col py-2 w-32">
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 text-sm text-left hover:bg-gray-100"
-              >
-                수정하기
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm text-left hover:bg-gray-100"
-              >
-                삭제하기
-              </button>
-              <Link to="/community/board">
-                <button className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100">
-                  목록가기
+    <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
+      <SubLayout to="/community" menu="커뮤니티" label="자유게시판" />
+      <div className="mt-6 sm:mt-10 space-y-6">
+        {/* 게시글 내용 */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* 게시글 헤더 */}
+          <div className="border-b border-gray-100 p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                {post.title}
+              </h1>
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
+                  </svg>
                 </button>
-              </Link>
+                {showMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-2 w-32">
+                    <button
+                      onClick={handleEdit}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      수정하기
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                    >
+                      삭제하기
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center text-sm text-gray-500 gap-4">
+              <span>{post.writer}</span>
+              <span>{post.date}</span>
             </div>
           </div>
-        )}
 
-        <h1 className="text-xl sm:text-3xl font-semibold mb-1 mt-5 pr-8 sm:pr-0">
-          {post.title}
-        </h1>
-        <p className="text-xs sm:text-sm text-gray-500 mb-3">
-          {post.writer} {post.date}
-        </p>
-        <div className="border-t py-2"></div>
-        <p className="text-sm sm:text-base leading-relaxed mb-5 bg-gray-50 px-4 py-7 text-gray-800">
-          {post.content}
-        </p>
+          {/* 게시글 본문 */}
+          <div className="p-6 min-h-[200px] text-gray-700 whitespace-pre-wrap">
+            {post.content}
+          </div>
 
-        {/* 버튼 (데스크톱) */}
-        <div className="hidden sm:flex gap-2 mb-8 justify-end">
-          <button
-            className="btn bg-gray-700 text-white btn-sm"
-            onClick={handleEdit}
+          {/* 댓글 섹션 */}
+          <div className="border-t border-gray-100">
+            <div className="p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">댓글</h2>
+
+              {/* 댓글 입력 */}
+              <div className="flex gap-2 mb-6">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="댓글을 입력하세요"
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  onKeyPress={(e) => e.key === "Enter" && handleAddComment()}
+                />
+                <button
+                  onClick={handleAddComment}
+                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
+                >
+                  등록
+                </button>
+              </div>
+
+              {/* 댓글 목록 */}
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="flex justify-between items-start bg-gray-50 rounded-lg p-4"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium text-gray-900">
+                          {comment.nickname}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {comment.date} {comment.time}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{comment.text}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteComment(comment.id)}
+                      className="text-sm text-gray-500 hover:text-red-500"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 목록으로 돌아가기 버튼 */}
+        <div className="flex justify-center">
+          <Link
+            to="/community/board"
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
           >
-            수정하기
-          </button>
-          <button
-            className="btn bg-gray-700 text-white btn-sm"
-            onClick={handleDelete}
-          >
-            삭제하기
-          </button>
-          <Link to="/community/board">
-            <button className="btn bg-gray-700 text-white btn-sm">
-              목록가기
-            </button>
+            목록으로
           </Link>
         </div>
-      </div>
-
-      {/* 댓글 */}
-      <div className="space-y-2 mb-8 border p-3 rounded-md border-gray-300">
-        <p className="font-bold text-sm sm:text-base">댓글</p>
-        <div className="flex flex-col gap-2">
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="댓글을 작성하세요."
-            className="w-full h-[60px] sm:h-[100px] input input-bordered text-sm p-3 resize-none"
-          />
-          <div className="flex justify-end">
-            <button
-              className="btn btn-sm bg-gray-700 text-white px-4"
-              onClick={handleAddComment}
-            >
-              등록
-            </button>
-          </div>
-        </div>
-        {comments.map((c) => (
-          <div key={c.id} className="bg-gray-100 p-3 rounded">
-            <div className="flex justify-between items-center text-sm text-gray-600">
-              <span className="font-medium">{c.nickname}</span>
-              <span className="text-xs">
-                {c.date} {c.time}
-              </span>
-            </div>
-            <p className="text-gray-800 text-sm mt-1">{c.text}</p>
-            <div className="flex justify-end ">
-              <button
-                onClick={() => handleDeleteComment(c.id)}
-                className="text-xs hover:text-gray-700"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );

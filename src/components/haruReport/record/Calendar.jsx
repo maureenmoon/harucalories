@@ -16,7 +16,7 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
   };
 
   const getMealDataForDate = (date) => {
-    if (!date) return null;
+    if (!date || !mealData) return [];
 
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -78,7 +78,7 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
             <div className="flex flex-wrap gap-1 mt-1">
               {dayMeals.map((meal) => (
                 <div
-                  key={meal.id}
+                  key={meal.mealId}
                   className={`w-2 h-2 rounded-full ${
                     meal.type === "아침"
                       ? "bg-yellow-300"
