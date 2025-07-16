@@ -1,6 +1,8 @@
+import ChangePassword from "../pages/member/ChangePassword";
 import Login from "../pages/member/Login";
+import SearchNickname from "../pages/member/SearchNickname";
 import Signup from "../pages/member/Signup";
-import MyPage from "../pages/mypage/MyPage";
+// import MyPage from "../pages/mypage/MyPage";
 
 const memberRoutes = [
   {
@@ -10,6 +12,14 @@ const memberRoutes = [
   {
     path: "signup",
     element: <Signup />,
+  },
+  {
+    path: "reset-password",
+    element: <ChangePassword />,
+  },
+  {
+    path: "search-nickname",
+    element: <SearchNickname />,
   },
 ];
 

@@ -4,9 +4,12 @@ import { Link } from "react-router-dom";
 import { logout } from "../slices/loginSlice";
 
 function Menu() {
-  const email = useSelector((state) => {
-    return state.loginSlice.email;
-  });
+  // const email = useSelector((state) => {
+  //   return state.loginSlice.email;
+  // });
+
+  const email = useSelector((state) => state.login?.email);
+  const nickname = useSelector((state) => state.login?.nickname);
 
   const dispatch = useDispatch();
 

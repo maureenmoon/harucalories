@@ -23,10 +23,10 @@ export default function Signup() {
     nickname: "",
     name: "",
     birthAt: "",
-    gender: "FEMALE",
+    gender: "여성",
     height: "",
     weight: "",
-    activityLevel: "MEDIUM",
+    activityLevel: "활동적",
   });
 
   const handleChange = (e) => {
