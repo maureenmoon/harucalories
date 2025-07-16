@@ -13,8 +13,10 @@ import { createSlice } from "@reduxjs/toolkit";
 //   photo: "",
 // };
 
+//Step 1: Redux
 //new user 새로운 사용자
 const initState = {
+  isLoggedIn: false,
   email: "",
   nickname: "",
   userid: null,
@@ -30,26 +32,38 @@ const loginSlice = createSlice({
   name: "loginSlice",
   initialState: initState,
   reducers: {
-    // login: (state, action) => {
-    //   console.log("login...");
-    //   console.log(action.payload.email, action.payload.password);
-    //   state.email = action.payload.email;
     login: (state, action) => {
-      console.log("login...", action.payload);
-      return { ...state, ...action.payload }; //clean replacement
+      //try without mockdata
+      // login: (state, action) => {
+      //   console.log("login...", action.payload);
+      //   return { ...state, ...action.payload }; //clean replacement
+
+      //Redux
+      return {
+        ...state,
+        ...action.payload,
+        isLoggedIn: true,
+      };
     },
-    logout: (state, action) => {
-      console.log("logout...");
-      return initState;
-    },
+    logout: () => initState,
+
+    // logout: (state, action) => {
+    //   console.log("logout...");
+    //   return initState;
+    // },
     editProfile: (state, action) => {
       return { ...state, ...action.payload };
     },
     updatePhoto: (state, action) => {
       state.photo = action.payload;
     },
+    setNickname: (state, action) => {
+      state.nickname = action.payload;
+    },
   },
 });
 
-export default loginSlice;
-export const { login, logout, editProfile, updatePhoto } = loginSlice.actions; //구조분해 할당
+export const { login, logout, editProfile, updatePhoto, setNickname } =
+  loginSlice.actions; //구조분해 할당
+// export default loginSlice;
+export default loginSlice.reducer; // ✅ clean default export
