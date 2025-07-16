@@ -71,7 +71,7 @@ function Meal() {
               style={{ width: "40%" }}
             ></div>
           </div>
-          <div className="flex gap-10 justify-center">
+          <div className="flex gap-10 justify-between">
             <div>
               <div className="text-md mb-4 pr-10 sm:pr-24">
                 <span className="font-bold text-sm sm:text-base">
