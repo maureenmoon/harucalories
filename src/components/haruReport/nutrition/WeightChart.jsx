@@ -43,7 +43,7 @@ const WeightChart = ({ period }) => {
 
   return (
     <div ref={containerRef}>
-      <div className="mb-4">
+      <div className="mb-4 flex justify-end">
         <span className="text-gray-600">현재 체중:</span>
         <span className="ml-2 font-bold text-lg">{currentWeight}kg</span>
       </div>
@@ -58,7 +58,11 @@ const WeightChart = ({ period }) => {
             <XAxis dataKey="date" />
             <YAxis domain={["dataMin - 1", "dataMax + 1"]} />
             <Tooltip />
-            <Legend />
+            <Legend
+              formatter={(value) => (
+                <span style={{ color: "black" }}>{value}</span>
+              )}
+            />
             <ReferenceLine
               y={targetWeight}
               label="목표 체중"

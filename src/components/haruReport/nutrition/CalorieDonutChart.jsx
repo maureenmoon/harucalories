@@ -8,7 +8,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+// 식사 타입별 색상 정의
+const MEAL_COLORS = {
+  아침: "#fcd34d", // yellow-300
+  점심: "#93c5fd", // blue-300
+  저녁: "#fca5a5", // red-300
+  간식: "#c4b5fd", // purple-300
+};
 
 const CalorieDonutChart = () => {
   const containerRef = useRef(null);
@@ -40,7 +46,7 @@ const CalorieDonutChart = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-2 border rounded shadow">
+        <div className="bg-white border rounded shadow p-2">
           <p className="font-semibold">{data.name}</p>
           <p>
             {data.calories}kcal ({data.percentage}%)
@@ -61,7 +67,7 @@ const CalorieDonutChart = () => {
     index,
   }) => {
     const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.3;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -69,7 +75,9 @@ const CalorieDonutChart = () => {
       <text
         x={x}
         y={y}
-        fill="white"
+        fill="black"
+        fontSize={14} // 추가: 폰트 크기
+        fontWeight="semibold" // 추가: 볼드 처리
         textAnchor={x > cx ? "start" : "end"}
         dominantBaseline="central"
       >
@@ -92,23 +100,27 @@ const CalorieDonutChart = () => {
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius="60%"
-              outerRadius="80%"
+              innerRadius="40%"
+              outerRadius="85%"
               fill="#8884d8"
               paddingAngle={5}
               dataKey="calories"
               labelLine={false}
               label={renderCustomizedLabel}
             >
-              {data.map((entry, index) => (
+              {data.map((entry) => (
                 <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
+                  key={`cell-${entry.name}`}
+                  fill={MEAL_COLORS[entry.name]}
                 />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
+
+            <Legend
+              formatter={(value) => (
+                <span style={{ color: "black" }}>{value}</span>
+              )}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>

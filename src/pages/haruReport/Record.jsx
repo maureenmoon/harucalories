@@ -4,6 +4,7 @@ import HaruCalendar from "../../components/haruReport/record/Calendar";
 import MealCard from "../../components/haruReport/record/MealCard";
 import { Link } from "react-router-dom";
 import MealSummary from "../../components/haruReport/record/MealSummary";
+import SubLayout from "../../layout/SubLayout";
 
 function Record() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -276,6 +277,8 @@ function Record() {
 
   // 선택된 날짜의 식사 데이터를 가져오는 함수
   const getSelectedMeals = () => {
+    if (!selectedDates.length || !mealData) return [];
+
     return selectedDates
       .flatMap((date) => {
         // 선택된 날짜의 시작과 끝 시간을 한국 시간대 기준으로 설정
@@ -348,135 +351,126 @@ function Record() {
   }, [mealData, selectedDate]);
 
   return (
-    <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
-      <div className="flex flex-col items-center text-gray-500 md:flex-row md:items-start">
-        <Link to="/haruReport" className="hidden md:block mb-3">
-          <p className="text-lg sm:text-2xl font-semibold hover:underline cursor-pointer">
-            리포트{">"}
-          </p>
-        </Link>
-        <h1 className="text-lg sm:text-2xl font-semibold text-center md:text-left mt-0 md:mt-0">
-          기록습관
-        </h1>
-      </div>
+    <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
+      <SubLayout to="/haruReport" menu="리포트" label="기록습관" />
+      <div className="mt-6 sm:mt-10 space-y-6">
+        <MealSummary mealCounts={mealCounts} />
+        <HaruCalendar
+          selectedDate={selectedDate}
+          mealData={mealData}
+          onDateClick={handleDateClick}
+          onMonthChange={(date) => {
+            setSelectedDate(date);
+            setSelectedDates([]);
+          }}
+          className="mb-8"
+        />
 
-      <MealSummary mealCounts={mealCounts} />
+        {selectedDates.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-lg sm:text-2xl font-bold mb-4 text-gray-700 ml-2">
+              |선택된 날짜의 식사 기록
+            </h2>
 
-      <HaruCalendar
-        selectedDate={selectedDate}
-        mealData={mealData}
-        onDateClick={handleDateClick}
-        onMonthChange={(date) => {
-          setSelectedDate(date);
-          setSelectedDates([]);
-        }}
-        className="mb-8"
-      />
+            {/* 날짜별로 그룹핑 */}
+            {(() => {
+              const grouped = getSelectedMeals().reduce((acc, meal) => {
+                const dateKey = new Date(meal.createDate).toLocaleDateString(
+                  "ko-KR",
+                  {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  }
+                );
+                if (!acc[dateKey]) acc[dateKey] = [];
+                acc[dateKey].push(meal);
+                return acc;
+              }, {});
 
-      {selectedDates.length > 0 && (
-        <div className="mt-8 mb-8">
-          <h2 className="text-lg sm:text-2xl font-bold mb-4 text-gray-700 ml-2">
-            |선택된 날짜의 식사 기록
-          </h2>
+              const sortedDates = Object.keys(grouped).sort(
+                (a, b) => new Date(b) - new Date(a)
+              );
 
-          {/* 날짜별로 그룹핑 */}
-          {(() => {
-            const grouped = getSelectedMeals().reduce((acc, meal) => {
-              const dateKey = new Date(meal.createDate).toLocaleDateString(
-                "ko-KR",
-                {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
+              return sortedDates.map((date, idx) => {
+                const meals = grouped[date].sort(
+                  (a, b) => new Date(b.createDate) - new Date(a.createDate)
+                );
+
+                // 이전 날짜 마지막 식사 ↔ 현재 날짜 첫 식사
+                const prevDate = sortedDates[idx - 1];
+                const prevLastMeal = prevDate
+                  ? grouped[prevDate][grouped[prevDate].length - 1]
+                  : null;
+                const currentFirstMeal = meals[0];
+
+                // 공복 시간 계산
+                let fastingGap = null;
+                if (prevLastMeal && currentFirstMeal) {
+                  const gapHours =
+                    Math.abs(
+                      new Date(prevLastMeal.createDate) -
+                        new Date(currentFirstMeal.createDate)
+                    ) /
+                    (1000 * 60 * 60); // 시간 단위
+
+                  fastingGap =
+                    gapHours % 1 === 0
+                      ? gapHours.toFixed(0)
+                      : gapHours.toFixed(1);
                 }
-              );
-              if (!acc[dateKey]) acc[dateKey] = [];
-              acc[dateKey].push(meal);
-              return acc;
-            }, {});
 
-            const sortedDates = Object.keys(grouped).sort(
-              (a, b) => new Date(b) - new Date(a)
-            );
-
-            return sortedDates.map((date, idx) => {
-              const meals = grouped[date].sort(
-                (a, b) => new Date(b.createDate) - new Date(a.createDate)
-              );
-
-              // 이전 날짜 마지막 식사 ↔ 현재 날짜 첫 식사
-              const prevDate = sortedDates[idx - 1];
-              const prevLastMeal = prevDate
-                ? grouped[prevDate][grouped[prevDate].length - 1]
-                : null;
-              const currentFirstMeal = meals[0];
-
-              // 공복 시간 계산
-              let fastingGap = null;
-              if (prevLastMeal && currentFirstMeal) {
-                const gapHours =
-                  Math.abs(
-                    new Date(prevLastMeal.createDate) -
-                      new Date(currentFirstMeal.createDate)
-                  ) /
-                  (1000 * 60 * 60); // 시간 단위
-
-                fastingGap =
-                  gapHours % 1 === 0
-                    ? gapHours.toFixed(0)
-                    : gapHours.toFixed(1);
-              }
-
-              return (
-                <React.Fragment key={date}>
-                  {/* 날짜 간 공복 구간 표시 */}
-                  {idx > 0 && fastingGap && (
-                    <div className="flex items-center ml-5 ">
-                      <img
-                        src="/images/mark.png"
-                        alt="날짜 사이 공복 타임라인"
-                        className="h-12 mr-2"
-                      />
-                      <span className="text-sm text-purple-600 font-semibold">
-                        공복시간: {fastingGap}시간
-                      </span>
-                    </div>
-                  )}
-
-                  {/* 날짜별 카드 묶음 */}
-                  <div className="border border-gray-300 rounded-2xl p-4 sm:p-6 bg-white shadow">
-                    <h3 className="text-mb font-semibold text-gray-700 mb-1 mr-3 flex justify-end">
-                      {date}
-                    </h3>
-
-                    {meals.map((meal, index) => (
-                      <div key={meal.mealId} className="relative">
-                        <MealCard meal={meal} />
-
-                        {/* 같은 날짜 내 식사 사이 공복 */}
-                        {index < meals.length - 1 && (
-                          <div className="flex items-center ml-5 ">
-                            <img
-                              src="/images/mark.png"
-                              alt="공복 타임라인"
-                              className="h-12 mr-2"
-                            />
-                            {meal.fastingTime && (
-                              <span className="text-sm text-gray-500 font-semibold">
-                                공복시간: {meal.fastingTime}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                return (
+                  <React.Fragment key={date}>
+                    {/* 날짜 간 공복 구간 표시 */}
+                    {idx > 0 && fastingGap && (
+                      <div className="flex items-center ml-5 ">
+                        <img
+                          src="/images/mark.png"
+                          alt="날짜 사이 공복 타임라인"
+                          className="h-12 mr-2"
+                        />
+                        <span className="text-sm text-purple-600 font-semibold">
+                          공복시간: {fastingGap}시간
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </React.Fragment>
-              );
-            });
-          })()}
-        </div>
-      )}
+                    )}
+
+                    {/* 날짜별 카드 묶음 */}
+                    <div className="border border-gray-300 rounded-2xl p-4 sm:p-6 bg-white shadow">
+                      <h3 className="text-mb font-semibold text-gray-700 mb-1 mr-3 flex justify-end">
+                        {date}
+                      </h3>
+
+                      {meals.map((meal, index) => (
+                        <div key={meal.mealId} className="relative">
+                          <MealCard meal={meal} />
+
+                          {/* 같은 날짜 내 식사 사이 공복 */}
+                          {index < meals.length - 1 && (
+                            <div className="flex items-center ml-5 ">
+                              <img
+                                src="/images/mark.png"
+                                alt="공복 타임라인"
+                                className="h-12 mr-2"
+                              />
+                              {meal.fastingTime && (
+                                <span className="text-sm text-gray-500 font-semibold">
+                                  공복시간: {meal.fastingTime}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </React.Fragment>
+                );
+              });
+            })()}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
