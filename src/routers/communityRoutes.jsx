@@ -6,6 +6,12 @@ import Write from "../components/community/board/Write";
 import WriteView from "../components/community/board/WriteView";
 import WriteUpdate from "../components/community/board/WriteUpdate";
 
+import IssueDetail from "../components/community/issue/IssueDetail";
+import IssueDelete from "../components/community/issue/IssueDelete";
+import IssueUpdate from "../components/community/issue/IssueUpdate";
+import IssueWrite from "../components/community/issue/IssueWrite";
+import IssueLayout from "../components/community/issue/IssueLayout";
+
 const communityRoutes = [
   {
     index: true,
@@ -13,7 +19,26 @@ const communityRoutes = [
   },
   {
     path: "issue",
-    element: <Issue />,
+    element: <IssueLayout />,
+    children: [
+      { index: true, element: <Issue /> },
+      {
+        path: "view/:id",
+        element: <IssueDetail />,
+      },
+      {
+        path: "write",
+        element: <IssueWrite />,
+      },
+      {
+        path: "update/:id",
+        element: <IssueUpdate />,
+      },
+      {
+        path: "delete/:id",
+        element: <IssueDelete />,
+      },
+    ],
   },
   {
     path: "board",
