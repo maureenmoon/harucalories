@@ -1,8 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
-// import loginSlice from "../slices/loginSlice";
-// import mealSlice from "../slices/mealSlice";
 import loginReducer from "../slices/loginSlice";
-import mealReducer from "../slices/loginSlice";
+import mealReducer from "../slices/mealSlice";
 
 const store = configureStore({
   reducer: {

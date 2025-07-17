@@ -1,10 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const initialState = {
+  selectedMeal: null,
+};
+
 const mealSlice = createSlice({
   name: "meal",
-  initialState: {
-    selectedMeal: "",
-  },
+  initialState,
   reducers: {
     setSelectedMeal: (state, action) => {
       state.selectedMeal = action.payload;
@@ -13,4 +15,4 @@ const mealSlice = createSlice({
 });
 
 export const { setSelectedMeal } = mealSlice.actions;
-export default mealSlice;
+export default mealSlice.reducer;

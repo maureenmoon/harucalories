@@ -6,6 +6,10 @@ const calorieGoal = 1694;
 
 function Meal() {
   const [mealRecords, setMealRecords] = useState([]);
+  const [totalKcal, setTotalKcal] = useState(0);
+  const [totalCarbs, setTotalCarbs] = useState(0);
+  const [totalProtein, setTotalProtein] = useState(0);
+  const [totalFat, setTotalFat] = useState(0);
   const navigate = useNavigate();
 
   const handleCardClick = (record) => {
@@ -15,6 +19,23 @@ function Meal() {
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("mealRecords") || "[]");
     setMealRecords(stored);
+
+    let kcal = 0,
+      carbs = 0,
+      protein = 0,
+      fat = 0;
+
+    stored.forEach((record) => {
+      kcal += record.kcal || 0;
+      carbs += record.carbs || 0;
+      protein += record.protein || 0;
+      fat += record.fat || 0;
+    });
+
+    setTotalKcal(kcal);
+    setTotalCarbs(carbs);
+    setTotalProtein(protein);
+    setTotalFat(fat);
   }, []);
 
   return (
@@ -31,21 +52,24 @@ function Meal() {
         <div className="card bg-base-100 shadow-lg p-4 px-0 sm:px-40">
           <div className="text-md mb-4">
             <span className="font-bold">총 섭취량</span>{" "}
-            <span className="text-purple-500 font-bold">0000</span> /{" "}
+            <span className="text-purple-500 font-bold">{totalKcal}</span> /{" "}
             {calorieGoal}kcal
           </div>
 
+          {/* 전체 kcal */}
           <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
             <div
               className="bg-purple-500 h-4 rounded-full"
-              style={{ width: "40%" }}
+              style={{
+                width: `${Math.min((totalKcal / calorieGoal) * 100, 100)}%`,
+              }}
             ></div>
           </div>
           <div className="flex gap-10 justify-between">
             <div>
               <div className="text-md mb-4 pr-10 sm:pr-24">
                 <span className="font-bold text-sm sm:text-base">
-                  탄수화물 <span className="text-green">000</span>g
+                  탄수화물 <span className="text-green">{totalCarbs}</span>g
                 </span>
               </div>
 
@@ -53,14 +77,16 @@ function Meal() {
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div
                   className="bg-green h-4 rounded-full"
-                  style={{ width: "40%" }}
+                  style={{
+                    width: `${Math.min((totalCarbs / 300) * 100, 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
             <div>
               <div className="text-md mb-4 pr-10 sm:pr-24">
                 <span className="font-bold text-sm sm:text-base">
-                  단백질 <span className="text-yellow">000</span>g
+                  단백질 <span className="text-yellow">{totalProtein}</span>g
                 </span>
               </div>
 
@@ -68,14 +94,16 @@ function Meal() {
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div
                   className="bg-yellow h-4 rounded-full"
-                  style={{ width: "40%" }}
+                  style={{
+                    width: `${Math.min((totalProtein / 60) * 100, 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
             <div>
               <div className="text-md mb-4 pr-10 sm:pr-24">
                 <span className="font-bold text-sm sm:text-base">
-                  지방 <span className="text-red">000</span>g
+                  지방 <span className="text-red">{totalFat}</span>g
                 </span>
               </div>
 
@@ -83,7 +111,7 @@ function Meal() {
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div
                   className="bg-red h-4 rounded-full"
-                  style={{ width: "40%" }}
+                  style={{ width: `${Math.min((totalFat / 70) * 100, 100)}%` }}
                 ></div>
               </div>
             </div>
@@ -95,7 +123,7 @@ function Meal() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {mealRecords.map((record) => (
             <div key={record.id} onClick={() => handleCardClick(record)}>
-              <div className="card bg-base-100 w-full rounded-xl shadow-lg p-[20px]">
+              <div className="card justify-between bg-base-100 w-full rounded-xl shadow-lg p-[20px]">
                 <figure className="mt-4">
                   <img
                     className="rounded-xl h-[180px] w-full object-cover"

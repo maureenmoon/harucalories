@@ -69,9 +69,15 @@ function Analyis() {
     try {
       setIsLoading(true);
       const res = await axios.post(
-        "http://localhost:8080/api/food/analyze",
-        formData
+        "http://localhost:8000/api/food/analyze",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
+
       const text = res.data.result;
       const parsed = parseNutritionData(text);
 
