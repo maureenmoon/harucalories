@@ -1,47 +1,58 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { login } from "../../slices/loginSlice";
-import { validateEmail, validatePassword } from "../../utils/auth/validatos";
+import { validateNickname, validatePassword } from "../../utils/auth/validatos";
 import FormInput from "../../components/mypage/FormInput";
 
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nickname: "", password: "" });
+  const [form, setForm] = useState({
+    nickname: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!validateNickname(form.nickname)) {
+      newErrors.nickname = "영어소문자 또는 숫자, 4~12자";
+    }
+
+    if (!validatePassword(form.password)) {
+      newErrors.password = "영어대문자,숫자,특수문자 포함, 4~20자";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    if (!validateNick(form.nickname))
-      return alert("닉네임 형식이 잘못되었습니다.");
-    if (!validatePassword(form.password))
-      return alert("비밀번호 형식이 잘못되었습니다.");
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const foundUser = users.find(
+      (u) => u.nickname === form.nickname && u.password === form.password
+    );
 
-    // mock - Replace this with real API response when ready
-    const mockUser = {
-      nickname: form.nickname,
-      email: "susiemoon@naver.com",
-      userid: 3,
-      name: "문연순",
-      height: 156,
-      weight: 57,
-      targetCalories: 1800,
-      activityLevel: "활동적",
-      photo: "",
-    };
+    if (!foundUser) {
+      alert("닉네임 또는 비밀번호가 잘못되었습니다.");
+      return;
+    }
 
-    dispatch(login(mockUser)); //DISPATCH FULL USER OBJECT HERE
+    localStorage.setItem("loginUser", JSON.stringify(foundUser));
+    dispatch(login(foundUser));
 
-    // Replace mock part with API data
-    // const response = await loginApi(email, password); // ← your login API call
-    // dispatch(login(response.data)); // assuming response.data contains full user info
-
+    alert(`${foundUser.nickname}님 환영합니다!`);
     navigate("/");
   };
 
@@ -50,19 +61,41 @@ export default function Login() {
       <div className="w-full max-w-sm bg-white rounded-xl shadow-md p-6 sm:p-8">
         <h2 className="text-2xl font-bold mb-6 text-center">로그인</h2>
         <form onSubmit={handleLogin} className="space-y-4">
-          <FormInput
-            name="nickname"
-            value={form.nickname}
-            onChange={handleChange}
-            placeholder="닉네임"
-          />
-          <FormInput
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="비밀번호"
-          />
+          <div>
+            <label
+              htmlFor="nickname"
+              className="block text-sm font-medium text-gray-700"
+            >
+              닉네임
+            </label>
+            <FormInput
+              name="nickname"
+              value={form.nickname}
+              onChange={handleChange}
+              placeholder="영어 소문자 또는 숫자, 4~12자"
+            />
+            {errors.nickname && (
+              <p className="text-xs text-red-500 ml-1">{errors.nickname}</p>
+            )}
+          </div>
+
+          {/* password */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              비밀번호
+            </label>
+            <FormInput
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="영어대문자,숫자,특수문자 포함, 4~20자"
+            />
+          </div>
+
           <button
             type="submit"
             className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -70,7 +103,7 @@ export default function Login() {
             로그인
           </button>
         </form>
-        {/* Links */}
+
         <div className="mt-4 flex justify-between text-sm text-gray-600">
           <Link to="/member/search-nickname" className="hover:underline">
             닉네임 찾기

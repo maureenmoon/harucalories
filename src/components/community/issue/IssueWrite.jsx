@@ -1,12 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import PurBtn from "../../common/PurBtn";
 import SubLayout from "../../../layout/SubLayout";
 
-function Write() {
+function IssueWrite() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const navigate = useNavigate();
+
+  //begin login-user
+  const [loginUser, setLoginUser] = useState(null);
+
+  // 로그인 및 권한 확인
+  useEffect(() => {
+    const storedUser = localStorage.getItem("loginUser");
+    if (!storedUser) {
+      alert("로그인이 필요합니다.");
+      navigate("/member/login");
+      return;
+    }
+
+    const parsed = JSON.parse(storedUser);
+    if (parsed.role !== "admin") {
+      alert("관리자만 글을 작성할 수 있습니다.");
+      navigate("/community/issue");
+      return;
+    }
+    setLoginUser(parsed);
+  }, []);
+
+  if (!loginUser) return null;
+  //end login-user
 
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
@@ -14,26 +38,26 @@ function Write() {
       return;
     }
 
-    const postId = Date.now();
+    const issueId = Date.now();
     const rawDate = new Date().toLocaleDateString("ko-KR");
     const cleanDate = rawDate.endsWith(".") ? rawDate.slice(0, -1) : rawDate;
-    const newPost = {
-      id: postId,
+    const newIssue = {
+      id: issueId,
       title,
       content,
-      writer: "홍길동", // 임시 작성자
+      writer: loginUser.nickname,
       date: cleanDate,
     };
 
-    // 기존 posts 가져오기
-    const existing = JSON.parse(localStorage.getItem("posts")) || [];
+    // 기존 issues 가져오기
+    const existing = JSON.parse(localStorage.getItem("issues")) || [];
 
     // 새 글 추가
-    const updated = [...existing, newPost];
-    localStorage.setItem("posts", JSON.stringify(updated));
+    const updated = [...existing, newIssue];
+    localStorage.setItem("issues", JSON.stringify(updated));
 
     alert("핫이슈가 등록되었습니다!");
-    navigate(`/community/issue/view/${newPost.id}`);
+    navigate(`/community/issue/${newIssue.id}`);
   };
 
   return (
@@ -126,4 +150,4 @@ function Write() {
   );
 }
 
-export default Write;
+export default IssueWrite;

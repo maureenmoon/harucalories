@@ -6,7 +6,8 @@ import ProfileImage from "../../components/mypage/ProfileImage";
 import InfoList from "../../components/mypage/InfoList";
 
 export default function ProfileSearch() {
-  const user = useSelector((state) => state.loginSlice);
+  const user = useSelector((state) => state.login.user);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const fileInputRef = useRef();

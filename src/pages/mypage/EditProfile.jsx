@@ -7,7 +7,8 @@ import FormSelect from "../../components/mypage/FormSelect";
 import calculateCalories from "../../components/mypage/calculateCalories";
 
 export default function EditProfile() {
-  const user = useSelector((state) => state.loginSlice);
+  // const user = useSelector((state) => state.loginSlice);
+  const user = useSelector((state) => state.login.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -81,21 +82,21 @@ export default function EditProfile() {
               { value: "HIGH", label: "매우 활동적" },
             ]}
           />
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
+            <button
+              type="submit"
+              className=" px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+            >
+              저장
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className=" py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-100"
+            >
+              메인 페이지
+            </button>
+          </div>
         </form>
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
-          <button
-            type="submit"
-            className=" px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
-          >
-            저장
-          </button>
-          <button
-            onClick={() => navigate("/")}
-            className=" py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-100"
-          >
-            메인 페이지
-          </button>
-        </div>
       </div>
     </div>
   );

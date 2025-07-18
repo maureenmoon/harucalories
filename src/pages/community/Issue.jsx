@@ -1,143 +1,158 @@
-// src/pages/community/Issue.jsx
-import { useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import SubLayout from "../../layout/SubLayout";
+import SearchBar from "../../components/common/SearchBar";
 
-const dummyIssues = Array.from({ length: 32 }, (_, i) => ({
-  id: i + 1,
-  title: `Hot Issue Title ${i + 1}`,
-  createdAt: `2025. 6.${24 - (i % 5)}`,
-}));
-
-const ITEMS_PER_PAGE_PC = 15;
-const ITEMS_PER_PAGE_MOBILE = 5;
-
-const Issue = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+function Issue() {
   const navigate = useNavigate();
+  const [issues, setIssues] = useState([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [filteredIssues, setFilteredIssues] = useState([]);
+  // const [searchKeyword, setSearchKeyword] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+  //simulate auth state
+  const [loginUser, setLoginUser] = useState(null);
 
-  const isMobile = window.innerWidth <= 768;
-  const itemsPerPage = isMobile ? ITEMS_PER_PAGE_MOBILE : ITEMS_PER_PAGE_PC;
+  //redirect if not logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("loginUser");
 
-  const filteredIssues = dummyIssues.filter((issue) =>
-    issue.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    if (!storedUser) {
+      alert("로그인이 필요합니다");
+      navigate("/member/login");
+      return;
+    }
 
-  const pageCount = Math.ceil(filteredIssues.length / itemsPerPage);
-  const paginatedIssues = filteredIssues.slice(
+    // Set login user from localStorage
+    const user = JSON.parse(storedUser);
+    setLoginUser(user);
+
+    // Load issues from localStorage or dummy
+    const storedIssues = localStorage.getItem("issues");
+    if (storedIssues) {
+      const parsedIssues = JSON.parse(storedIssues);
+      setIssues(parsedIssues);
+      setFilteredIssues(parsedIssues);
+    } else {
+      const dummyIssues = [
+        {
+          id: 1,
+          title: "사이트 버그 제보",
+          content: "모바일 화면 깨짐 현상 발생",
+          writer: "toby",
+          date: "2025.07.15",
+        },
+        {
+          id: 2,
+          title: "기능 요청",
+          content: "검색 기능이 있으면 좋겠어요",
+          writer: "관리자",
+          date: "2025.07.16",
+        },
+      ];
+      localStorage.setItem("issues", JSON.stringify(dummyIssues));
+      setIssues(dummyIssues);
+      setFilteredIssues(dummyIssues);
+    }
+  }, []);
+
+  const handleSearch = (keyword) => {
+    const lowerKeyword = keyword.trim().toLowerCase();
+    const filtered = issues.filter((issue) =>
+      issue.title.toLowerCase().includes(lowerKeyword)
+    );
+    setFilteredIssues(filtered);
+    setCurrentPage(1);
+  };
+
+  if (!loginUser) return null;
+  const isAdmin = loginUser?.role === "admin";
+
+  const sorted = [...filteredIssues].sort((a, b) => b.id - a.id);
+  const totalPages = Math.ceil(sorted.length / itemsPerPage);
+  const paginated = sorted.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
-  // const handleWrite = () => {
-  //   navigate("write");
-  // };
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pageCount) {
-      setCurrentPage(newPage);
-    }
-  };
-
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-2">커뮤니티 &gt; 핫이슈</div>
+    <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
+      <SubLayout to="/community" menu="커뮤니티" label="이슈" />
 
-      {/* Search */}
-      <div className="mb-4 flex items-center justify-between">
-        <input
-          type="text"
-          placeholder="제목에 포함된 단어를 검색하세요."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="w-full border border-gray-300 rounded px-4 py-2 text-sm"
-        />
-      </div>
-
-      {/* Table headers */}
-      <div className="grid grid-cols-12 font-bold border-b py-2 px-2 text-gray-700">
-        <div className="col-span-9">제목</div>
-        <div className="col-span-3 text-right">작성일</div>
-      </div>
-
-      {/* List */}
-      {paginatedIssues.map((issue) => (
-        <div
-          key={issue.id}
-          className="grid grid-cols-12 py-2 px-2 border-b hover:bg-gray-50 cursor-pointer"
-        >
-          <Link
-            to={`view/${issue.id}`}
-            className="col-span-9 text-sm truncate text-blue-600 hover:underline"
-          >
-            {issue.title}
-          </Link>
-          <div className="col-span-3 text-right text-sm text-gray-500">
-            {issue.createdAt}
+      <div className="mt-6 sm:mt-10 space-y-6">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              전체 이슈
+            </h2>
+            {isAdmin && (
+              <Link
+                to="/community/issue/write"
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm sm:text-base"
+              >
+                글쓰기
+              </Link>
+            )}
           </div>
+          <SearchBar onSearch={handleSearch} />
         </div>
-      ))}
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center mt-4 gap-2 text-sm">
-        {isMobile ? (
-          <>
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="text-blue-600"
-            >
-              [이전]
-            </button>
-            <span>
-              {currentPage} / {pageCount}
-            </span>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === pageCount}
-              className="text-blue-600"
-            >
-              [다음]
-            </button>
-          </>
-        ) : (
-          Array.from({ length: pageCount }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-2 py-1 rounded ${
-                currentPage === i + 1
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))
-        )}
-      </div>
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-purple-500 text-white">
+                <th className="py-4 px-6 text-left w-[50%]">제목</th>
+                <th className="py-4 px-6 text-left w-[20%]">작성자</th>
+                <th className="py-4 px-6 text-left w-[20%]">작성일</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {paginated.map((issue) => (
+                <tr
+                  key={issue.id}
+                  className="hover:bg-purple-50 transition-colors duration-150"
+                >
+                  <td className="py-4 px-6">
+                    <Link
+                      to={`/community/issue/${issue.id}`}
+                      className="text-gray-900 hover:text-purple-600 line-clamp-1"
+                      onClick={() =>
+                        localStorage.setItem("selectedIssueId", issue.id)
+                      }
+                    >
+                      {issue.title}
+                    </Link>
+                  </td>
+                  <td className="py-4 px-6 text-gray-600">{issue.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Write Button */}
-      <div className="flex justify-end mt-6">
-        <Outlet />
-        <button
-          onClick={() => {
-            console.log("navigate to write");
-            navigate("write");
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-        >
-          글쓰기
-        </button>
+        <div className="flex justify-center items-center gap-2">
+          <button
+            className="text-sm px-3 py-1 border rounded disabled:opacity-30"
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            이전
+          </button>
+          <span className="text-sm">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            className="text-sm px-3 py-1 border rounded disabled:opacity-30"
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            다음
+          </button>
+        </div>
       </div>
     </div>
   );
-};
+}
 
 export default Issue;

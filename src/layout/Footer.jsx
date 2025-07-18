@@ -42,14 +42,16 @@ function Footer() {
       <footer className="w-[1020px] footer bg-base-200 text-base-content border-base-300 container mx-auto border-t px-10 py-4">
         <aside className="grid-flow-col items-center">
           {/* <img src="public/haru.svg" alt="" className="w-10" /> */}
-          <p>
+          {/* <p> */}
+          <div>
             <p className="text-sm sm:text-base">
               서울특별시 구로구 경인로 557 삼영빌딩 4층
             </p>
             <p className="text-gray-400 text-sm sm:text-base">
               © 하이미디어 구로캠버스 자바 풀스택 AI 융합 웹개발
             </p>
-          </p>
+          </div>
+          {/* </p> */}
         </aside>
       </footer>
     </div>

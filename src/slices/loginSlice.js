@@ -1,22 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// existing user 기존 사용자 로그인
-// const initState = {
-//   email: "susiemoon@naver.com",
-//   nickname: "toby",
-//   userid: 3,
-//   name: "문연순",
-//   height: 156,
-//   weight: 57,
-//   targetCalories: null,
-//   activityLevel: "활동적",
-//   photo: "",
-// };
-
-//Step 1: Redux
-//new user 새로운 사용자
-const initState = {
-  isLoggedIn: false,
+const emptyUser = {
   email: "",
   nickname: "",
   userid: null,
@@ -25,7 +9,13 @@ const initState = {
   weight: null,
   targetCalories: null,
   activityLevel: "",
-  photo: "", //base64 or img URL
+  role: "",
+  photo: "",
+};
+
+const initState = {
+  isLoggedIn: false,
+  user: { ...emptyUser },
 };
 
 const loginSlice = createSlice({
@@ -33,37 +23,28 @@ const loginSlice = createSlice({
   initialState: initState,
   reducers: {
     login: (state, action) => {
-      //try without mockdata
-      // login: (state, action) => {
-      //   console.log("login...", action.payload);
-      //   return { ...state, ...action.payload }; //clean replacement
-
-      //Redux
       return {
-        ...state,
-        ...action.payload,
         isLoggedIn: true,
+        user: { ...action.payload },
       };
     },
-    logout: () => initState,
-
-    // logout: (state, action) => {
-    //   console.log("logout...");
-    //   return initState;
-    // },
+    logout: () => ({
+      isLoggedIn: false,
+      user: { ...emptyUser },
+    }),
     editProfile: (state, action) => {
-      return { ...state, ...action.payload };
+      state.user = { ...state.user, ...action.payload };
     },
     updatePhoto: (state, action) => {
-      state.photo = action.payload;
+      state.user.photo = action.payload;
     },
     setNickname: (state, action) => {
-      state.nickname = action.payload;
+      state.user.nickname = action.payload;
     },
   },
 });
 
 export const { login, logout, editProfile, updatePhoto, setNickname } =
-  loginSlice.actions; //구조분해 할당
-// export default loginSlice;
-export default loginSlice.reducer; // ✅ clean default export
+  loginSlice.actions;
+
+export default loginSlice.reducer;

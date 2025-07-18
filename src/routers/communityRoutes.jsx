@@ -23,7 +23,7 @@ const communityRoutes = [
     children: [
       { index: true, element: <Issue /> },
       {
-        path: "view/:id",
+        path: ":id",
         element: <IssueDetail />,
       },
       {

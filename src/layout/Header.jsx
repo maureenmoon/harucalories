@@ -1,16 +1,39 @@
-import React from "react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../slices/loginSlice";
 
 function Header() {
-  // const email = useSelector((state) => {
-  // return state.loginSlice.email;
-  // const nickname = useSelector((state) => {
-  // return state.loginSlice.nickname;
-  // });
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const email = useSelector((state) => state.login?.email);
-  const nickname = useSelector((state) => state.login?.nickname);
+  // get state from redux
+  const reduxNickname = useSelector((state) => state.login.user?.nickname);
+  const reduxEmail = useSelector((state) => state.login.user?.email);
+  const isLoggedInRedux = useSelector((state) => state.login.isLoggedIn);
+
+  // Local login state fallback (from localStorage)
+  const [loginUser, setLoginUser] = useState(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("loginUser");
+    if (stored) {
+      setLoginUser(JSON.parse(stored));
+    }
+  }, []);
+
+  const currentNickname = reduxNickname || loginUser?.nickname;
+  const isLoggedIn = isLoggedInRedux || !!loginUser;
+
+  const handleLogout = () => {
+    // Clear Redux
+    dispatch(logout());
+    // Clear localStorage
+    localStorage.removeItem("loginUser");
+    setLoginUser(null);
+    // Redirect
+    navigate("/");
+  };
 
   return (
     <div className="flex justify-between w-full items-center mx-auto bg-white px-3">
@@ -18,51 +41,31 @@ function Header() {
         <h1>
           <Link to="/">
             <img
-              src="./images/main_icon.png"
-              alt=""
-              className="w-full max-w-[90%] h-auto md:max-w-[600px] sm:max-w-[90%] h-auto object-contain"
+              src="/images/main_icon.png"
+              alt="main icon"
+              className="w-full max-w-[90%] h-auto md:max-w-[600px] sm:max-w-[90%] object-contain"
             />
           </Link>
         </h1>
-        {/* <ul className="flex gap-3 items-center text-sm">
-          <li>
-            <Link
-              to="/mypage"
-              className="font-semibold text-purple-500 hover:underline"
-            >
-              {nickname}
-            </Link>
-            님, 반갑습니다!
-          </li>
 
-          {email ? (
-            <li>
-              <p className="text-sm text-gray-400 hover:underline">로그아웃</p>
-            </li>
-          ) : (
-            <li>
-              <Link to={"../member/login"}>
-                <p className="text-sm text-gray-400 hover:underline">로그인</p>
-              </Link>
-            </li>
-          )}
-        </ul> */}
         <ul className="flex gap-3 items-center text-sm">
-          {email ? (
+          {isLoggedIn ? (
             <>
               <li>
                 <Link
                   to="/mypage"
                   className="font-semibold text-purple-500 hover:underline"
                 >
-                  {nickname}
+                  {currentNickname} 님, 반갑습니다!
                 </Link>
-                님, 반갑습니다!
               </li>
               <li>
-                <p className="text-sm text-gray-400 hover:underline">
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-400 hover:underline"
+                >
                   로그아웃
-                </p>
+                </button>
               </li>
             </>
           ) : (
