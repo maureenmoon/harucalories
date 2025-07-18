@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { checkDuplication, signup } from "../../assets/api/auth/signupApi";
 import {
   validateEmail,
   validateNickname,
@@ -27,55 +26,81 @@ export default function Signup() {
     height: "",
     weight: "",
     activityLevel: "활동적",
+    role: "user",
   });
+
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prevForm) => ({ ...prevForm, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" })); // clear error on change
   };
 
-  const handleSubmitStep1 = async (e) => {
+  const handleSubmitStep1 = (e) => {
     e.preventDefault();
+    const newErrors = {};
 
-    if (!validateEmail(form.email))
-      return alert("올바른 이메일 형식을 입력해주세요.");
-    if (!validatePassword(form.password))
-      return alert("비밀번호 형식이 유효하지 않습니다.");
-    if (form.password !== form.passwordConfirm)
-      return alert("비밀번호가 일치하지 않습니다.");
-    if (!validateNickname(form.nickname))
-      return alert("닉네임 형식이 유효하지 않습니다.");
-
-    try {
-      await checkDuplication(form.email, form.nickname);
-      setStep(2);
-    } catch (err) {
-      alert("이미 사용 중인 이메일 또는 닉네임입니다.");
+    if (!validateEmail(form.email)) {
+      newErrors.email = "올바른 이메일 형식이 아닙니다.";
     }
+    if (!validatePassword(form.password)) {
+      newErrors.password =
+        "비밀번호는 영어대문자,숫자,특수문자를 포함한 4~20자입니다.";
+    }
+    if (form.password !== form.passwordConfirm) {
+      newErrors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
+    }
+    if (!validateNickname(form.nickname)) {
+      newErrors.nickname = "닉네임은 영어 소문자 또는 숫자, 4~12자입니다.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    const duplicate = users.find(
+      (u) => u.email === form.email || u.nickname === form.nickname
+    );
+    if (duplicate) {
+      alert("이미 사용 중인 이메일 또는 닉네임입니다.");
+      return;
+    }
+
+    setStep(2);
   };
 
-  const handleSubmitFinal = async (e) => {
+  const handleSubmitFinal = (e) => {
     e.preventDefault();
-
     const { birthAt, gender, activityLevel, height, weight } = form;
     if (!birthAt || !gender || !activityLevel || !height || !weight) {
       return alert("모든 정보를 정확히 입력해주세요.");
     }
 
-    try {
-      const result = await signup(form);
-      const dailyCalories = calculateCalories(form);
-      setCalories(dailyCalories);
+    const users = JSON.parse(localStorage.getItem("users")) || [];
 
-      localStorage.setItem("dailyCalories", dailyCalories);
-      localStorage.setItem("nickname", form.nickname);
+    const { passwordConfirm, ...formData } = form;
 
-      setIsComplete(true);
-      console.log(result);
-    } catch (err) {
-      alert("서버 오류 또는 잘못된 입력입니다.");
-      console.log(err);
-    }
+    const newUser = {
+      ...formData,
+      userid: Date.now(),
+      photo: "", //default profile image
+      role: "user", //force role
+    };
+
+    const updatedUsers = [...users, newUser];
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
+    localStorage.setItem("loginUser", JSON.stringify(newUser)); // will match loginSlice.user
+
+    const dailyCalories = calculateCalories(newUser);
+    localStorage.setItem("dailyCalories", dailyCalories);
+    localStorage.setItem("nickname", newUser.nickname);
+
+    setCalories(dailyCalories);
+    setIsComplete(true);
   };
 
   return (
@@ -87,43 +112,72 @@ export default function Signup() {
           <>
             <h2 className="text-2xl font-bold mb-6 text-center">회원가입</h2>
             <form onSubmit={handleSubmitStep1} className="space-y-4">
-              <FormInput
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="이메일"
-              />
-              <FormInput
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="비밀번호"
-              />
-              <FormInput
-                name="passwordConfirm"
-                type="password"
-                value={form.passwordConfirm}
-                onChange={handleChange}
-                placeholder="비밀번호 확인"
-              />
-              <FormInput
-                name="nickname"
-                value={form.nickname}
-                onChange={handleChange}
-                placeholder="닉네임"
-              />
-              <FormInput
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="이름"
-              />
+              <div>
+                <label className="text-sm font-medium">이메일</label>
+                <FormInput
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="example@email.com"
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500">{errors.email}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium">비밀번호</label>
+                <FormInput
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="영어대문자,숫자,특수문자 포함 4~20자"
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-500">{errors.password}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium">비밀번호 확인</label>
+                <FormInput
+                  name="passwordConfirm"
+                  type="password"
+                  value={form.passwordConfirm}
+                  onChange={handleChange}
+                  placeholder="비밀번호 확인"
+                />
+                {errors.passwordConfirm && (
+                  <p className="text-xs text-red-500">
+                    {errors.passwordConfirm}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium">닉네임</label>
+                <FormInput
+                  name="nickname"
+                  value={form.nickname}
+                  onChange={handleChange}
+                  placeholder="영어 소문자, 숫자, 4~12자"
+                />
+                {errors.nickname && (
+                  <p className="text-xs text-red-500">{errors.nickname}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium">이름</label>
+                <FormInput
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="이름"
+                />
+              </div>
               <button
                 type="submit"
                 className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                가입하기
+                다음
               </button>
             </form>
           </>
