@@ -59,7 +59,7 @@ function Meal() {
           {/* 전체 kcal */}
           <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
             <div
-              className="bg-purple-500 h-4 rounded-full"
+              className="bg-gradient-to-r from-purple-500 to-purple-700 h-4 rounded-full"
               style={{
                 width: `${Math.min((totalKcal / calorieGoal) * 100, 100)}%`,
               }}
@@ -76,7 +76,7 @@ function Meal() {
               {/* 전체 progress bar */}
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div
-                  className="bg-green h-4 rounded-full"
+                  className="bg-gradient-to-r from-green to-green-700 h-4 rounded-full"
                   style={{
                     width: `${Math.min((totalCarbs / 300) * 100, 100)}%`,
                   }}
@@ -93,7 +93,7 @@ function Meal() {
               {/* 전체 progress bar */}
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div
-                  className="bg-yellow h-4 rounded-full"
+                  className="bg-gradient-to-r from-yellow to-yellow-700 h-4 rounded-full"
                   style={{
                     width: `${Math.min((totalProtein / 60) * 100, 100)}%`,
                   }}
@@ -110,7 +110,7 @@ function Meal() {
               {/* 전체 progress bar */}
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div
-                  className="bg-red h-4 rounded-full"
+                  className="bg-gradient-to-r from-red to-red-700 h-4 rounded-full"
                   style={{ width: `${Math.min((totalFat / 70) * 100, 100)}%` }}
                 ></div>
               </div>
