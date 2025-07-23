@@ -7,12 +7,16 @@ import InfoList from "../../components/mypage/InfoList";
 
 export default function ProfileSearch() {
   const user = useSelector((state) => state.login.user);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const fileInputRef = useRef();
 
-  if (!user || !user.nickname) return <div>Loading...</div>;
+  if (!user || !user.nickname)
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-pulse">로딩 중...</div>
+      </div>
+    );
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
@@ -26,56 +30,68 @@ export default function ProfileSearch() {
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 sm:px-8 lg:px-16">
-      <div className="bg-white rounded-xl shadow-md w-full max-w-3xl p-6 sm:p-10 text-center">
-        {/* Profile image and update button */}
-        <div className="relative">
-          <ProfileImage nickname={user.nickname} photo={user.photo} />
-          <button
-            onClick={() => fileInputRef.current.click()}
-            className="mt-2 text-sm text-blue-500 hover:underline"
-          >
-            사진 변경
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handlePhotoChange}
-          />
-        </div>
+    <div className="p-6 sm:p-8">
+      {/* 프로필 헤더 */}
+      <div className="bg-purple-50 rounded-lg p-6 mb-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <ProfileImage nickname={user.nickname} photo={user.photo} />
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="absolute -bottom-2 -right-2 bg-purple-500 text-white p-2 rounded-full hover:bg-purple-600 transition-colors duration-200"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handlePhotoChange}
+            />
+          </div>
 
-        {/* Name + Email */}
-        <div className="mt-4 text-xl font-medium text-gray-800">
-          {user.nickname}
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              {user.nickname}
+            </h2>
+            <p className="text-gray-600">{user.email}</p>
+          </div>
         </div>
-        <div className="text-gray-500 text-sm">{user.email}</div>
+      </div>
 
-        {/* Info list */}
+      {/* 사용자 정보 */}
+      <div className="mb-8">
         <InfoList user={user} />
+      </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
-          <button
-            onClick={() => navigate("/mypage/withdraw")}
-            className="px-4 py-2 rounded border border-blue-500 text-red-400 font-semibold hover:bg-blue-50"
-          >
-            탈퇴하기
-          </button>
-          <button
-            onClick={() => navigate("/mypage/edit")}
-            className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
-          >
-            수정
-          </button>
-          <button
-            onClick={() => navigate("/")}
-            className="px-4 py-2 rounded border border-blue-500 text-blue-600 font-semibold hover:bg-blue-50"
-          >
-            메인 페이지
-          </button>
-        </div>
+      {/* 액션 버튼 */}
+      <div className="flex flex-col sm:flex-row justify-center gap-3">
+        <button
+          onClick={() => navigate("/mypage/edit")}
+          className="px-6 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors duration-200"
+        >
+          프로필 수정
+        </button>
+        <button
+          onClick={() => navigate("/")}
+          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+        >
+          메인으로
+        </button>
+        <button
+          onClick={() => navigate("/mypage/withdraw")}
+          className="px-6 py-3 border border-red-300 text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors duration-200"
+        >
+          회원 탈퇴
+        </button>
       </div>
     </div>
   );
