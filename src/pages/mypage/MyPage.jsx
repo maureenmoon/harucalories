@@ -7,7 +7,7 @@ import WithDrawMembership from "./WithdrawMembership";
 export default function MyPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-      <nav className="flex flex-col sm:flex-row justify-around sm:justify-start gap-4 sm:gap-10 mb-6 border-b pb-4 text-gray-600 font-semibold text-lg">
+      <nav className="flex flex-col sm:flex-row justify-around sm:justify-start gap-4 sm:gap-10 mb-6  pb-4  font-semibold text-lg">
         <Link to="profile" className="hover:text-blue-600"></Link>
         <Link to="edit" className="hover:text-blue-600"></Link>
         <Link to="withdraw" className="hover:text-red-600"></Link>

@@ -8,8 +8,14 @@ import MyPage from "../pages/mypage/MyPage";
 import memberRoutes from "./memberRoutes";
 import Result from "../pages/meal/result";
 import mypageRoutes from "./mypageRoutes";
+import WelcomeMain from "../pages/welcome/welcomeMain";
 
 const root = createBrowserRouter([
+  // 웰컴 페이지를 위한 별도 라우터 (헤더/메뉴 없음)
+  {
+    path: "/welcome",
+    element: <WelcomeMain />,
+  },
   {
     path: "/",
     element: <RootLayout />,
