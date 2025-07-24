@@ -11,25 +11,26 @@ import mypageRoutes from "./mypageRoutes";
 import WelcomeMain from "../pages/welcome/welcomeMain";
 
 const root = createBrowserRouter([
-  // 웰컴 페이지를 위한 별도 라우터 (헤더/메뉴 없음)
-  {
-    path: "/welcome",
-    element: <WelcomeMain />,
-  },
+  // 웰컴 페이지를 루트로 설정 (비로그인 사용자용)
   {
     path: "/",
+    element: <WelcomeMain />,
+  },
+  // 로그인된 사용자용 메인 대시보드
+  {
+    path: "/dashboard",
     element: <RootLayout />,
     children: [
       {
-        path: "/",
+        path: "",
         element: <Meal />,
       },
       {
-        path: "/Analyis",
+        path: "analyis", // 기존 컴포넌트명에 맞춤
         element: <Analyis />,
       },
       {
-        path: "/Result",
+        path: "result",
         element: <Result />,
       },
     ],
@@ -46,7 +47,6 @@ const root = createBrowserRouter([
   },
   {
     path: "/member",
-    // path: "/login",
     element: <RootLayout />,
     children: memberRoutes,
   },
@@ -54,13 +54,6 @@ const root = createBrowserRouter([
     path: "/mypage",
     element: <RootLayout />,
     children: mypageRoutes,
-    // children: [
-    //   {
-    //     // path: "/mypage",
-    //     path: "",
-    //     element: <MyPage />,
-    //   },
-    // ],
   },
 ]);
 

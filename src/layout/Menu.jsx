@@ -22,9 +22,10 @@ function Menu() {
         <ul className="flex  items-center font-light text-white text-sm sm:text-base">
           <li>
             <Link
-              to="/"
+              to="/dashboard"
               className={`block py-4 px-8 ${
-                location.pathname === "/"
+                location.pathname === "/dashboard" ||
+                location.pathname.startsWith("/dashboard")
                   ? "bg-purple-700 text-white"
                   : "hover:bg-purple-700"
               }`}
