@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import SubLayout from "../../layout/SubLayout";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -12,6 +12,10 @@ function Analyis() {
   const [isLoading, setIsLoading] = useState(false); //로딩창
   const [images, setImages] = useState([]); //추가 이미지
   const [mealRecords, setMealRecords] = useState([]); //기록 저장
+
+  useEffect(() => {
+    setTimestamp(new Date());
+  }, []);
 
   const handleImageClick = (e) => {
     fileInputRef.current?.click();
@@ -149,17 +153,14 @@ function Analyis() {
         <div className="flex flex-row sm:flex-row gap-2 mb-4">
           <input
             type="text"
-            value={timestamp ? formatDate(timestamp) : ""}
-            readOnly
-            className="input input-bordered-full flex-1 text-center"
+            placeholder="날짜를 입력해 주세요"
+            className="input input-bordered flex-1 text-center"
           />
           <input
             type="text"
-            value={timestamp ? formatTime(timestamp) : ""}
-            readOnly
+            placeholder="시간을 입력해 주세요"
             className="input input-bordered flex-1 text-center"
           />
-
           <input
             type="text"
             value={selectedMeal}

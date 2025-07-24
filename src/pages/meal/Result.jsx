@@ -21,17 +21,37 @@ function Result() {
         <div className="flex flex-row sm:flex-row gap-2 mb-4">
           <input
             type="text"
-            placeholder="2025-06-25(수)"
+            value={
+              passedRecord.modifiedAt
+                ? passedRecord.modifiedAt.split("T")[0]
+                : ""
+            }
+            placeholder="날짜를 입력해 주세요"
             className="input input-bordered flex-1 text-center"
           />
           <input
             type="text"
-            placeholder="오전 09:04"
+            value={
+              passedRecord.modifiedAt
+                ? passedRecord.modifiedAt.split("T")[1]?.slice(0, 5)
+                : ""
+            }
+            placeholder="시간을 입력해 주세요"
             className="input input-bordered flex-1 text-center"
           />
           <input
             type="text"
-            value={passedRecord.mealType}
+            value={
+              passedRecord.mealType === "BREAKFAST"
+                ? "아침"
+                : passedRecord.mealType === "LUNCH"
+                ? "점심"
+                : passedRecord.mealType === "DINNER"
+                ? "저녁"
+                : passedRecord.mealType === "SNACK"
+                ? "간식"
+                : passedRecord.mealType
+            }
             readOnly
             className="input input-bordered flex-1 text-center"
           />
@@ -51,14 +71,14 @@ function Result() {
           <div className="flex justify-between font-bold text-lg mb-4 px-10">
             <h2>총 섭취량</h2>
             <div className="flex">
-              <p>{passedRecord.kcal || 0}</p>
+              <p>{passedRecord.calories || 0}</p>
               <span className="text-purple-500">kcal</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-base">
             {[
-              ["탄수화물", passedRecord.carbs],
+              ["탄수화물", passedRecord.carbohydrate],
               ["단백질", passedRecord.protein],
               ["지방", passedRecord.fat],
               ["나트륨", Math.round((passedRecord.sodium ?? 0) * 10) / 10],
