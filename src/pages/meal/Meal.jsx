@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MealPickerModal from "../../components/meal/MealPickerModal";
-import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import MealCalendarModal from "../../components/meal/MealCalendarModal";
 
 const calorieGoal = 1694;
 
@@ -10,43 +12,102 @@ function Meal() {
   const [totalCarbs, setTotalCarbs] = useState(0);
   const [totalProtein, setTotalProtein] = useState(0);
   const [totalFat, setTotalFat] = useState(0);
+  const [selectedDate, setSelectedDate] = useState("2025-07-24"); // 기본 날짜
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleCardClick = (record) => {
     navigate("/result", { state: record });
   };
 
+  // 날짜 변경 함수
+  const changeDate = (diff) => {
+    const date = new Date(selectedDate);
+    date.setDate(date.getDate() + diff);
+    const newDate = date.toISOString().slice(0, 10);
+    setSelectedDate(newDate);
+  };
+
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("mealRecords") || "[]");
-    setMealRecords(stored);
+    const loadMeals = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/meals/modified-date/member/1?date=${selectedDate}`
+        );
+        console.log(res.data); // 실제 구조 확인
 
-    let kcal = 0,
-      carbs = 0,
-      protein = 0,
-      fat = 0;
+        // 배열이 아니면 빈 배열로 처리
+        const records = Array.isArray(res.data)
+          ? res.data
+          : res.data.data || [];
 
-    stored.forEach((record) => {
-      kcal += record.kcal || 0;
-      carbs += record.carbs || 0;
-      protein += record.protein || 0;
-      fat += record.fat || 0;
-    });
+        let kcal = 0,
+          carbs = 0,
+          protein = 0,
+          fat = 0;
 
-    setTotalKcal(kcal);
-    setTotalCarbs(carbs);
-    setTotalProtein(protein);
-    setTotalFat(fat);
-  }, []);
+        const updatedRecords = records.map((record) => {
+          let recordCalories = 0;
+          let recordCarbs = 0;
+          let recordProtein = 0;
+          let recordFat = 0;
+
+          record.foods.forEach((food) => {
+            recordCalories += food.calories || 0;
+            recordCarbs += food.carbohydrate || 0;
+            recordProtein += food.protein || 0;
+            recordFat += food.fat || 0;
+          });
+
+          kcal += recordCalories;
+          carbs += recordCarbs;
+          protein += recordProtein;
+          fat += recordFat;
+
+          return {
+            ...record,
+            calories: recordCalories,
+            carbohydrate: recordCarbs,
+            protein: recordProtein,
+            fat: recordFat,
+          };
+        });
+
+        setMealRecords(updatedRecords);
+        setTotalKcal(kcal);
+        setTotalCarbs(carbs);
+        setTotalProtein(protein);
+        setTotalFat(fat);
+      } catch (err) {
+        console.error("식사 기록 불러오기 실패", err);
+      }
+    };
+
+    loadMeals();
+  }, [selectedDate]);
 
   return (
     <>
       <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
         <div className="flex gap-4 items-center justify-center">
-          <div className="text-center text-lg sm:text-2xl font-bold">〈</div>
-          <div className="text-center text-lg sm:text-2xl font-bold">
-            25-06-25 (수)
+          <button
+            onClick={() => changeDate(-1)}
+            className="text-center text-lg sm:text-2xl font-bold"
+          >
+            〈
+          </button>
+          <div
+            className="text-center text-lg sm:text-2xl font-bold cursor-pointer"
+            onClick={() => setCalendarOpen(true)}
+          >
+            {selectedDate}
           </div>
-          <div className="text-center text-lg sm:text-2xl font-bold">〉</div>
+          <button
+            onClick={() => changeDate(1)}
+            className="text-center text-lg sm:text-2xl font-bold"
+          >
+            〉
+          </button>
         </div>
 
         <div className="card bg-base-100 shadow-lg p-4 px-0 sm:px-40">
@@ -119,11 +180,14 @@ function Meal() {
         </div>
 
         {/* 식사 기록 */}
-        <h2 className="m-0 text-lg sm:text-xl font-semibold">식사기록</h2>
+        <h2 className="m-0 pb-3 text-lg sm:text-xl font-semibold">식사기록</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {mealRecords.map((record) => (
             <div key={record.id} onClick={() => handleCardClick(record)}>
-              <div className="card justify-between bg-base-100 w-full rounded-xl shadow-lg p-[20px]">
+              <div
+                className="card justify-between bg-base-100 w-full rounded-xl shadow-lg p-[20px] transition duration-200 cursor-pointer hover:shadow-[0_0_24px_4px_rgba(156,163,175,0.4)] hover:border-2 hover:border-gray hover:scale-105"
+                style={{ border: "2px solid transparent" }}
+              >
                 <figure className="mt-4">
                   <img
                     className="rounded-xl h-[180px] w-full object-cover"
@@ -134,13 +198,24 @@ function Meal() {
                 <div className="card-body p-0">
                   <h2 className="card-title flex mt-2">
                     <span className="text-sm text-gray-500">
-                      {record.mealType}
+                      {record.mealType === "BREAKFAST"
+                        ? "아침"
+                        : record.mealType === "LUNCH"
+                        ? "점심"
+                        : record.mealType === "DINNER"
+                        ? "저녁"
+                        : record.mealType === "SNACK"
+                        ? "간식"
+                        : record.mealType}
                     </span>
-                    <span className="text-purple-500">{record.kcal}kcal</span>
+                    <span className="text-purple-500">
+                      {record.calories}kcal
+                    </span>
                   </h2>
                   <div className="text-[16px] font-semibold flex gap-4">
                     <p>
-                      탄 <span className="text-green">{record.carbs}</span>g
+                      탄{" "}
+                      <span className="text-green">{record.carbohydrate}</span>g
                     </p>
                     <p>
                       단 <span className="text-yellow">{record.protein}</span>g
@@ -156,6 +231,12 @@ function Meal() {
         </div>
       </div>
       <MealPickerModal />
+      <MealCalendarModal
+        open={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        onSelectDate={setSelectedDate}
+        memberId={1}
+      />
     </>
   );
 }
