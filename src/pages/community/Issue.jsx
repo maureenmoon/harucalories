@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SubLayout from "../../layout/SubLayout";
 import SearchBar from "../../components/common/SearchBar";
+import ChatBot from "../../components/chatbot/ChatBot";
 
 function Issue() {
   const navigate = useNavigate();
@@ -151,6 +152,9 @@ function Issue() {
           </button>
         </div>
       </div>
+
+      {/* 챗봇 추가 */}
+      <ChatBot />
     </div>
   );
 }

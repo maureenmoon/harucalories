@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import SubLayout from "../../../layout/SubLayout";
+import ChatBot from "../../chatbot/ChatBot";
+import { getAllBoards } from "../../../api/board/boardApi";
 
 function MainBoard() {
-  const [posts, setPosts] = useState(() => {
-    const stored = localStorage.getItem("posts");
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [searchInput, setSearchInput] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -16,27 +17,63 @@ function MainBoard() {
     setSearchKeyword(searchInput.trim());
   };
 
-  useEffect(() => {
-    const existing = localStorage.getItem("posts");
-    if (!existing) {
-      const dummyPosts = [
-        {
-          id: 1,
-          title: "다이어트 정보 공유",
-          content: "다이어트 너무 힘들다",
-          writer: "홍길동",
-          date: "2025. 07. 10",
-        },
-        {
-          id: 2,
-          title: "다이어트 팁 나눔",
-          content: "물 많이 마시기 중요해요!",
-          writer: "김다이어트",
-          date: "2025. 07. 11",
-        },
-      ];
-      localStorage.setItem("posts", JSON.stringify(dummyPosts));
+  const testUser = {
+    email: "tidlsld249@naver.com",
+    nickname: "anra1",
+    id: 9, // DB의 실제 memberId와 일치
+    name: "안소라",
+    height: 165.5,
+    weight: 50,
+    activityLevel: "MODERATE",
+    role: "USER",
+    profile_image_url: "",
+    birth_at: "1990-11-01",
+    created_at: "2027-07-22",
+    updated_at: "2027-07-22",
+    gender: "FEMALE",
+    password: "Sora0917@",
+  };
+
+  // 게시글 목록 가져오기
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getAllBoards();
+      console.log("API 응답:", response); // 디버깅용
+
+      // 응답이 배열인지 확인
+      if (Array.isArray(response)) {
+        setPosts(response);
+      } else {
+        console.error("예상하지 못한 응답 형식:", response);
+        setPosts([]);
+      }
+    } catch (error) {
+      console.error("게시글 로딩 에러:", error);
+      setError("게시글을 불러오는데 실패했습니다.");
+      setPosts([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // 날짜 포맷팅 함수
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\./g, ". ")
+      .trim();
+  };
+
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
   const sortedPosts = [...posts].sort((a, b) => b.id - a.id);
@@ -117,8 +154,12 @@ function MainBoard() {
                         {post.title}
                       </Link>
                     </td>
-                    <td className="py-4 px-6 text-gray-600">{post.writer}</td>
-                    <td className="py-4 px-6 text-gray-600">{post.date}</td>
+                    <td className="py-4 px-6 text-gray-600">
+                      {post.memberId ? `회원${post.memberId}` : "알 수 없음"}
+                    </td>
+                    <td className="py-4 px-6 text-gray-600">
+                      {formatDate(post.createdAt)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -147,6 +188,8 @@ function MainBoard() {
           </div>
         </div>
       </div>
+      {/* 챗봇 추가 */}
+      <ChatBot />
     </div>
   );
 }

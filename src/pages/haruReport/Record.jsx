@@ -5,6 +5,7 @@ import MealCard from "../../components/haruReport/record/MealCard";
 import { Link } from "react-router-dom";
 import MealSummary from "../../components/haruReport/record/MealSummary";
 import SubLayout from "../../layout/SubLayout";
+import ChatBot from "../../components/chatbot/ChatBot";
 
 function Record() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -471,6 +472,8 @@ function Record() {
           </div>
         )}
       </div>
+      {/* 챗봇 */}
+      <ChatBot />
     </div>
   );
 }

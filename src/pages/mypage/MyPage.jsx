@@ -3,6 +3,7 @@ import { Link, Outlet, Route, Routes } from "react-router-dom";
 import ProfileSearch from "./ProfileSearch";
 import EditProfile from "./EditProfile";
 import WithDrawMembership from "./WithdrawMembership";
+import ChatBot from "../../components/chatbot/ChatBot";
 
 export default function MyPage() {
   return (
@@ -14,6 +15,8 @@ export default function MyPage() {
       </nav>
       <div className="bg-white p-6 sm:p-10 shadow-md rounded-xl">
         <Outlet />
+        {/* 챗봇 */}
+        <ChatBot />
       </div>
     </div>
   );

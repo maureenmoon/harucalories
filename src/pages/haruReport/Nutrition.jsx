@@ -4,6 +4,7 @@ import CalorieDonutChart from "../../components/haruReport/nutrition/CalorieDonu
 import DailyCalorieChart from "../../components/haruReport/nutrition/DailyCalorieChart";
 import NutritionBalanceChart from "../../components/haruReport/nutrition/NutritionBalanceChart";
 import SubLayout from "../../layout/SubLayout";
+import ChatBot from "../../components/chatbot/ChatBot";
 
 const Nutrition = () => {
   // 기간 선택 상태
@@ -51,6 +52,8 @@ const Nutrition = () => {
             <NutritionBalanceChart period={period} />
           </div>
         </div>
+        {/* 챗봇 */}
+        <ChatBot />
       </div>
     </div>
   );
