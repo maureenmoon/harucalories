@@ -1,76 +1,209 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+// import { useSelector } from "react-redux"; // 테스트용: Redux 의존성 제거
 import SubLayout from "../../../layout/SubLayout";
+import {
+  getBoardById,
+  deleteBoard,
+  getCommentsByBoardId,
+  addComment,
+  deleteComment,
+} from "../../../api/board/boardApi";
 
 function WriteView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  // const user = useSelector((state) => state.login.user); // 테스트용: Redux 의존성 제거
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [commentLoading, setCommentLoading] = useState(false);
 
-  const handleAddComment = () => {
+  // 게시글 가져오기
+  const fetchPost = async () => {
+    try {
+      const response = await getBoardById(id);
+      console.log("게시글 조회 성공:", response);
+      setPost(response);
+    } catch (error) {
+      console.error("게시글 조회 실패:", error);
+      setError("게시글을 불러오는데 실패했습니다.");
+    }
+  };
+
+  // 댓글 가져오기
+  const fetchComments = async () => {
+    try {
+      const response = await getCommentsByBoardId(id);
+      console.log("댓글 조회 성공:", response);
+      setComments(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.error("댓글 조회 실패:", error);
+      setComments([]);
+    }
+  };
+
+  // 게시글과 댓글 모두 가져오기
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await Promise.all([fetchPost(), fetchComments()]);
+    } catch (error) {
+      console.error("데이터 로딩 실패:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddComment = async () => {
     if (!commentText.trim()) {
       alert("댓글을 입력해주세요.");
       return;
     }
 
-    const now = new Date();
-    const newComment = {
-      id: Date.now(),
-      nickname: "내닉네임",
-      text: commentText,
-      date: now.toLocaleDateString("ko-KR").replace(/\.$/, ""),
-      time: now.toLocaleTimeString("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+    // 테스트용: 로그인 체크 주석처리
+    // if (!user || !user.userid) {
+    //   alert("로그인이 필요합니다.");
+    //   return;
+    // }
 
-    const updatedComments = [...comments, newComment];
-    setComments(updatedComments);
-    setCommentText("");
-    localStorage.setItem(`comments-${id}`, JSON.stringify(updatedComments));
+    try {
+      setCommentLoading(true);
+
+      const commentData = {
+        content: commentText.trim(),
+      };
+
+      // 테스트용: 하드코딩된 memberId 사용 (DB의 실제 memberId)
+      const testMemberId = 9;
+      console.log("댓글 작성 요청:", {
+        boardId: id,
+        memberId: testMemberId,
+        commentData,
+      });
+
+      // 실제 API 호출
+      const response = await addComment(id, testMemberId, commentData);
+      console.log("댓글 작성 성공:", response);
+
+      // 댓글 목록 새로고침
+      await fetchComments();
+      setCommentText("");
+    } catch (error) {
+      console.error("댓글 작성 실패:", error);
+      alert("댓글 작성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setCommentLoading(false);
+    }
   };
 
-  const handleDeleteComment = (commentId) => {
+  const handleDeleteComment = async (commentId) => {
     if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
 
-    const updatedComments = comments.filter(
-      (comment) => comment.id !== commentId
-    );
-    setComments(updatedComments);
-    localStorage.setItem(`comments-${id}`, JSON.stringify(updatedComments));
+    try {
+      console.log("댓글 삭제 요청:", commentId);
+
+      // 실제 API 호출
+      await deleteComment(commentId);
+      console.log("댓글 삭제 성공");
+
+      // 댓글 목록 새로고침
+      await fetchComments();
+    } catch (error) {
+      console.error("댓글 삭제 실패:", error);
+      alert("댓글 삭제에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
-    const posts = JSON.parse(localStorage.getItem("posts")) || [];
-    const filtered = posts.filter((p) => p.id !== Number(id));
-    localStorage.setItem("posts", JSON.stringify(filtered));
-    alert("삭제 완료!");
-    navigate("/community/board");
+
+    try {
+      console.log("게시글 삭제 요청:", id);
+
+      // 실제 API 호출
+      await deleteBoard(id);
+      console.log("게시글 삭제 성공");
+
+      alert("삭제 완료!");
+      navigate("/community/board");
+    } catch (error) {
+      console.error("게시글 삭제 실패:", error);
+      alert("게시글 삭제에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   useEffect(() => {
-    const allPosts = JSON.parse(localStorage.getItem("posts")) || [];
-    const found = allPosts.find((p) => p.id === Number(id));
-    setPost(found);
-
-    const savedComments =
-      JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
-    setComments(savedComments);
+    if (id) {
+      fetchData();
+    }
   }, [id]);
 
   const handleEdit = () => {
     navigate(`/community/board/update/${id}`);
   };
 
-  if (!post)
+  // 로딩 상태
+  if (loading) {
     return (
-      <div className="text-center mt-20">게시글을 불러오는 중입니다...</div>
+      <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
+        <SubLayout to="/community" menu="커뮤니티" label="자유게시판" />
+        <div className="mt-6 sm:mt-10">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">게시글을 불러오는 중입니다...</p>
+          </div>
+        </div>
+      </div>
     );
+  }
+
+  // 에러 상태
+  if (error || !post) {
+    return (
+      <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
+        <SubLayout to="/community" menu="커뮤니티" label="자유게시판" />
+        <div className="mt-6 sm:mt-10">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="text-red-500 mb-4">
+              <svg
+                className="h-12 w-12 mx-auto"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.768-.833-2.538 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <p className="text-red-600 mb-4">
+              {error || "게시글을 찾을 수 없습니다."}
+            </p>
+            <button
+              onClick={() => fetchData()}
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200 mr-4"
+            >
+              다시 시도
+            </button>
+            <Link
+              to="/community/board"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+            >
+              목록으로
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[1020px] mx-auto px-4 sm:px-6">
@@ -123,8 +256,14 @@ function WriteView() {
               </div>
             </div>
             <div className="flex items-center text-sm text-gray-500 gap-4">
-              <span>{post.writer}</span>
-              <span>{post.date}</span>
+              <span>
+                {post.memberId ? `회원${post.memberId}` : "알 수 없음"}
+              </span>
+              <span>
+                {post.createdAt
+                  ? new Date(post.createdAt).toLocaleDateString("ko-KR")
+                  : ""}
+              </span>
             </div>
           </div>
 
@@ -150,9 +289,15 @@ function WriteView() {
                 />
                 <button
                   onClick={handleAddComment}
-                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
+                  disabled={commentLoading}
+                  className={`px-4 py-2 text-white rounded-lg transition-colors duration-200 
+                          ${
+                            commentLoading
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-purple-500 hover:bg-purple-600"
+                          }`}
                 >
-                  등록
+                  {commentLoading ? "등록 중..." : "등록"}
                 </button>
               </div>
 
@@ -166,13 +311,19 @@ function WriteView() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-medium text-gray-900">
-                          {comment.nickname}
+                          {comment.memberId
+                            ? `회원${comment.memberId}`
+                            : "알 수 없음"}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {comment.date} {comment.time}
+                          {comment.createdAt
+                            ? new Date(comment.createdAt).toLocaleString(
+                                "ko-KR"
+                              )
+                            : ""}
                         </span>
                       </div>
-                      <p className="text-gray-700">{comment.text}</p>
+                      <p className="text-gray-700">{comment.content}</p>
                     </div>
                     <button
                       onClick={() => handleDeleteComment(comment.id)}
