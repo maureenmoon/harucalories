@@ -294,12 +294,14 @@ function Analyis() {
           </div>
         ))}
 
-        <button
-          className="btn bg-purple-500 text-white w-full rounded-lg py-6 text-base"
-          onClick={handleSaveMeal}
-        >
-          기록하기
-        </button>
+        <div className="pt-8">
+          <button
+            className="btn bg-purple-500 text-white w-full rounded-lg py-6 text-base"
+            onClick={handleSaveMeal}
+          >
+            기록하기
+          </button>
+        </div>
       </div>
 
       {isLoading && (
