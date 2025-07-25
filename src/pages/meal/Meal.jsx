@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { setMealRecords } from "../../slices/mealSlice";
 import { useNavigate } from "react-router-dom";
 import MealPickerModal from "../../components/meal/MealPickerModal";
 import axios from "axios";
@@ -7,11 +9,7 @@ import MealCalendarModal from "../../components/meal/MealCalendarModal";
 const calorieGoal = 1694;
 
 function Meal() {
-  const [mealRecords, setMealRecords] = useState([]);
-  const [totalKcal, setTotalKcal] = useState(0);
-  const [totalCarbs, setTotalCarbs] = useState(0);
-  const [totalProtein, setTotalProtein] = useState(0);
-  const [totalFat, setTotalFat] = useState(0);
+  const mealRecords = useSelector((state) => state.meal.mealRecords);
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     // yyyy-mm-dd 형식으로 변환
@@ -19,9 +17,10 @@ function Meal() {
   }); // 기본 날짜를 오늘로 설정
   const [calendarOpen, setCalendarOpen] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleCardClick = (record) => {
-    navigate("/result", { state: record });
+    navigate(`/result/${record.id}`);
   };
 
   // 날짜 변경 함수
@@ -38,8 +37,6 @@ function Meal() {
         const res = await axios.get(
           `http://localhost:8080/api/meals/modified-date/member/1?date=${selectedDate}`
         );
-        console.log(res.data); // 실제 구조 확인
-
         // 배열이 아니면 빈 배열로 처리
         const records = Array.isArray(res.data)
           ? res.data
@@ -77,18 +74,32 @@ function Meal() {
           };
         });
 
-        setMealRecords(updatedRecords);
-        setTotalKcal(kcal);
-        setTotalCarbs(carbs);
-        setTotalProtein(protein);
-        setTotalFat(fat);
+        dispatch(setMealRecords(updatedRecords));
       } catch (err) {
         console.error("식사 기록 불러오기 실패", err);
       }
     };
 
     loadMeals();
-  }, [selectedDate]);
+  }, [selectedDate, dispatch]);
+
+  // mealRecords의 합계 계산을 useMemo로 관리
+  const totalKcal = useMemo(
+    () => mealRecords.reduce((sum, r) => sum + (r.calories || 0), 0),
+    [mealRecords]
+  );
+  const totalCarbs = useMemo(
+    () => mealRecords.reduce((sum, r) => sum + (r.carbohydrate || 0), 0),
+    [mealRecords]
+  );
+  const totalProtein = useMemo(
+    () => mealRecords.reduce((sum, r) => sum + (r.protein || 0), 0),
+    [mealRecords]
+  );
+  const totalFat = useMemo(
+    () => mealRecords.reduce((sum, r) => sum + (r.fat || 0), 0),
+    [mealRecords]
+  );
 
   return (
     <>

@@ -29,7 +29,7 @@ const root = createBrowserRouter([
         element: <Analyis />,
       },
       {
-        path: "/Result",
+        path: "result/:id",
         element: <Result />,
       },
     ],
