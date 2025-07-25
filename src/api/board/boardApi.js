@@ -10,7 +10,7 @@ const boardApi = axios.create({
   },
 });
 
-// 요청 인터셉터 - 인증 토큰 추가
+// 요청 인터셉터 - 인증 토큰 추가/
 boardApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
