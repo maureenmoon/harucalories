@@ -12,7 +12,11 @@ function Meal() {
   const [totalCarbs, setTotalCarbs] = useState(0);
   const [totalProtein, setTotalProtein] = useState(0);
   const [totalFat, setTotalFat] = useState(0);
-  const [selectedDate, setSelectedDate] = useState("2025-07-24"); // 기본 날짜
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    // yyyy-mm-dd 형식으로 변환
+    return today.toISOString().slice(0, 10);
+  }); // 기본 날짜를 오늘로 설정
   const [calendarOpen, setCalendarOpen] = useState(false);
   const navigate = useNavigate();
 
