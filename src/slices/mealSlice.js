@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   selectedMeal: null,
   mealRecords: [], // 식사 기록 배열 추가
+  record: undefined, // 상세 식사 기록(상세 페이지용)
 };
 
 const mealSlice = createSlice({
@@ -29,6 +30,9 @@ const mealSlice = createSlice({
         (r) => r.id !== action.payload
       );
     },
+    setRecord: (state, action) => {
+      state.record = action.payload;
+    },
   },
 });
 
@@ -38,5 +42,6 @@ export const {
   addMealRecord,
   updateMealRecord,
   deleteMealRecord,
+  setRecord,
 } = mealSlice.actions;
 export default mealSlice.reducer;
