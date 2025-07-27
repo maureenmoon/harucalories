@@ -1,39 +1,40 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import SubLayout from "../../../layout/SubLayout";
+import PurBtn from "../../common/PurBtn";
 
 function IssueDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useSelector((state) => state.login);
+
   const [issue, setIssue] = useState(null);
-  const [loginUser, setLoginUser] = useState(null);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("loginUser"));
-    const storedIssues = JSON.parse(localStorage.getItem("issues")) || [];
-
-    const selected = storedIssues.find((item) => item.id === Number(id));
-
-    if (!user) {
-      alert("로그인이 필요합니다");
+    if (!isLoggedIn) {
+      alert("로그인이 필요합니다.");
       navigate("/member/login");
       return;
     }
 
-    setLoginUser(user);
+    // Load issue data
+    const storedIssues = JSON.parse(localStorage.getItem("issues")) || [];
+    const foundIssue = storedIssues.find((i) => i.id === parseInt(id));
 
-    if (!selected) {
-      alert("해당 글이 존재하지 않습니다.");
+    if (!foundIssue) {
+      alert("게시글을 찾을 수 없습니다.");
       navigate("/community/issue");
       return;
     }
 
-    setIssue(selected);
-  }, [id, navigate]);
+    setIssue(foundIssue);
+  }, [id, isLoggedIn, navigate]);
 
-  if (!issue) return null;
+  if (!isLoggedIn || !issue) return null;
 
-  const isAdmin = loginUser?.role === "admin";
+  const isAdmin = user?.role === "admin";
+  const isWriter = issue.writer === user?.nickname;
 
   const handleDelete = () => {
     if (window.confirm("정말 삭제하시겠습니까?")) {

@@ -1,33 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import SubLayout from "../../layout/SubLayout";
 import SearchBar from "../../components/common/SearchBar";
 import ChatBot from "../../components/chatbot/ChatBot";
 
 function Issue() {
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useSelector((state) => state.login);
+
   const [issues, setIssues] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [filteredIssues, setFilteredIssues] = useState([]);
   // const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
-  //simulate auth state
-  const [loginUser, setLoginUser] = useState(null);
 
-  //redirect if not logged in
+  // Redirect if not logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem("loginUser");
-
-    if (!storedUser) {
+    if (!isLoggedIn) {
       alert("로그인이 필요합니다");
       navigate("/member/login");
       return;
     }
-
-    // Set login user from localStorage
-    const user = JSON.parse(storedUser);
-    setLoginUser(user);
 
     // Load issues from localStorage or dummy
     const storedIssues = localStorage.getItem("issues");
@@ -56,7 +51,7 @@ function Issue() {
       setIssues(dummyIssues);
       setFilteredIssues(dummyIssues);
     }
-  }, []);
+  }, [isLoggedIn, navigate]);
 
   const handleSearch = (keyword) => {
     const lowerKeyword = keyword.trim().toLowerCase();
@@ -67,8 +62,8 @@ function Issue() {
     setCurrentPage(1);
   };
 
-  if (!loginUser) return null;
-  const isAdmin = loginUser?.role === "admin";
+  if (!user) return null;
+  const isAdmin = user?.role === "admin";
 
   const sorted = [...filteredIssues].sort((a, b) => b.id - a.id);
   const totalPages = Math.ceil(sorted.length / itemsPerPage);

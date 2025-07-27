@@ -1,9 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+//fix redux clean-up: re-login
+const storeUser = JSON.parse(localStorage.getItem("user"));
+
 const emptyUser = {
   email: "",
   nickname: "",
-  userid: null,
+  memberId: null,
   name: "",
   height: null,
   weight: null,
@@ -28,8 +31,11 @@ const testUser = {
 };
 
 const initState = {
-  isLoggedIn: false, // 테스트용: 로그인 상태 false로 설정
-  user: { ...emptyUser }, // 테스트용: 빈 사용자 정보 (API에서 하드코딩된 memberId 사용)
+  //   isLoggedIn: false, // 테스트용: 로그인 상태 false로 설정
+  //   user: { ...emptyUser }, // 테스트용: 빈 사용자 정보 (API에서 하드코딩된 memberId 사용)
+
+  isLoggedIn: !!storeUser,
+  user: storeUser || { ...emptyUser },
 };
 
 const loginSlice = createSlice({
@@ -37,15 +43,25 @@ const loginSlice = createSlice({
   initialState: initState,
   reducers: {
     login: (state, action) => {
+      const updatedUser = { ...state.user, ...action.payload };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
       return {
         isLoggedIn: true,
-        user: { ...action.payload },
+        user: updatedUser,
       };
     },
-    logout: () => ({
-      isLoggedIn: false,
-      user: { ...emptyUser },
-    }),
+    logout: () => {
+      // Clear ALL authentication data
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("loginUser"); // Remove legacy data too
+
+      return {
+        isLoggedIn: false,
+        user: { ...emptyUser },
+      };
+    },
     editProfile: (state, action) => {
       state.user = { ...state.user, ...action.payload };
     },
