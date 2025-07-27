@@ -18,7 +18,7 @@ export const signupMember = async (memberData, profileImage) => {
 };
 
 // 로그인 (cookie-based)
-export const loginMember = async (nickname, password) => {
+export const loginMember = async (nickname, password, retryCount = 0) => {
   try {
     const res = await axios.post(
       `${API_BASE}/login`,
@@ -32,6 +32,16 @@ export const loginMember = async (nickname, password) => {
     return res;
   } catch (err) {
     console.error("❌ loginApi error:", err.response?.data || err.message);
+
+    // Retry logic for network errors (max 2 retries)
+    if (retryCount < 2 && (err.message === "Network Error" || !err.response)) {
+      console.log(`🔄 Retrying login attempt ${retryCount + 1}/2...`);
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000 * (retryCount + 1))
+      ); // Exponential backoff
+      return loginMember(nickname, password, retryCount + 1);
+    }
+
     throw err;
   }
 };

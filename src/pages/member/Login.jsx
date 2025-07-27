@@ -56,43 +56,53 @@ export default function Login() {
       console.log("🔐 Attempting login...");
       const res = await loginMember(form.nickname, form.password);
 
-      // Extract tokens from response
-      const { accessToken, refreshToken } = res.data;
+      // ✅ Cookie-based authentication - tokens are in cookies, not response data
+      console.log("🔐 Login response status:", res.status);
+      console.log("🍪 Cookies should be set by backend");
 
-      console.log("🔐 Login response tokens:", {
-        accessToken: !!accessToken,
-        refreshToken: !!refreshToken,
-      });
+      // ✅ Don't try to extract tokens from response data
+      // The backend sets cookies directly, so we don't need to handle tokens manually
 
-      // Store tokens in cookies
-      setAccessToken(accessToken);
-      setRefreshToken(refreshToken);
+      console.log("🔧 Fetching user data...");
 
-      console.log("🍪 Tokens stored in cookies");
-      console.log("🔍 Stored accessToken:", accessToken ? "exists" : "missing");
-
-      // Set Authorization header for current session
-      axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-
-      console.log("🔧 Authorization header set on axios defaults");
-
-      // Fetch user data
+      // Fetch user data (cookies will be sent automatically)
       const user = await fetchCurrentMember();
 
-      // Update Redux state
+      // Update Redux state (without tokens since they're in cookies)
       dispatch(
         loginAction({
           ...user,
           memberId: user.id,
-          accessToken,
-          refreshToken,
+          // ✅ Don't pass tokens - they're in cookies
         })
       );
 
       console.log("✅ Login successful (cookie-based auth)");
       navigate("/");
     } catch (error) {
-      const message = error.response?.data?.message || "로그인에 실패했습니다.";
+      console.error("❌ Login error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+
+      let message = "로그인에 실패했습니다.";
+
+      if (error.response?.status === 403) {
+        message =
+          "서버 설정 문제로 로그인이 차단되었습니다. 관리자에게 문의해주세요.";
+      } else if (error.response?.status === 401) {
+        message = "닉네임 또는 비밀번호가 올바르지 않습니다.";
+      } else if (error.response?.status === 404) {
+        message = "로그인 서비스를 찾을 수 없습니다.";
+      } else if (error.response?.status >= 500) {
+        message = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      } else if (error.response?.data?.message) {
+        message = error.response.data.message;
+      } else if (error.message === "Network Error") {
+        message = "서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.";
+      }
+
       alert(message);
     } finally {
       setIsLoading(false);
@@ -147,10 +157,17 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
             disabled={isLoading}
           >
-            {isLoading ? "로그인 중..." : "로그인"}
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                로그인 중...
+              </>
+            ) : (
+              "로그인"
+            )}
           </button>
         </form>
 

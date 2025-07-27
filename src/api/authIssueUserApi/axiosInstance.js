@@ -28,6 +28,25 @@ instance.interceptors.response.use(
       error.response?.data
     );
 
+    // Log detailed error information for debugging
+    if (error.response) {
+      console.error("❌ Response error details:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers,
+        url: error.config?.url,
+        method: error.config?.method,
+      });
+    } else if (error.request) {
+      console.error("❌ Request error (no response):", {
+        request: error.request,
+        message: error.message,
+      });
+    } else {
+      console.error("❌ Error setting up request:", error.message);
+    }
+
     if (error.response?.status === 401) {
       console.log("❌ Authentication failed, redirecting to login");
 

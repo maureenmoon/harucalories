@@ -12,6 +12,7 @@ import {
   updateMemberWithImage,
 } from "../../api/authIssueUserApi/memberApi";
 import { getUserData } from "../../utils/cookieUtils";
+import { uploadProfileImage } from "../../utils/imageUpload/uploadImageToSupabase";
 
 export default function EditProfile() {
   // const user = useSelector((state) => state.login.user);
@@ -51,10 +52,15 @@ export default function EditProfile() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Image upload using backend multipart endpoint
+  // Optimized image upload using new function
   const handlePhotoChange = async (file) => {
     try {
       setIsLoading(true);
+      console.log("🖼️ Starting profile image upload...");
+
+      // Upload optimized profile image to Supabase
+      const uploadResult = await uploadProfileImage(file);
+      console.log("✅ Profile image upload result:", uploadResult);
 
       // Get current user ID from cookies
       const user = getUserData();
@@ -63,25 +69,42 @@ export default function EditProfile() {
       }
 
       const memberId = user.memberId || user.id;
-
       if (!memberId) {
         throw new Error("Member ID not found");
       }
 
-      // Upload image using multipart endpoint
-      const response = await updateMemberWithImage(memberId, {}, file);
+      // Update backend with new photo URL
+      const response = await updatePhoto(uploadResult.imageUrl);
 
       // Update form and Redux state with new photo URL
-      const newPhotoUrl = response.data?.photo || response.photo;
-      setForm((prev) => ({ ...prev, photo: newPhotoUrl }));
-      dispatch(editProfile({ ...currentUser, photo: newPhotoUrl }));
+      setForm((prev) => ({ ...prev, photo: uploadResult.imageUrl }));
+      dispatch(editProfile({ ...currentUser, photo: uploadResult.imageUrl }));
+
+      console.log("📊 Image optimization stats:");
+      console.log(
+        "   Original size:",
+        (uploadResult.originalSize / 1024).toFixed(2),
+        "KB"
+      );
+      console.log(
+        "   Optimized size:",
+        (uploadResult.optimizedSize / 1024).toFixed(2),
+        "KB"
+      );
+      console.log(
+        "   Compression ratio:",
+        (
+          (1 - uploadResult.optimizedSize / uploadResult.originalSize) *
+          100
+        ).toFixed(1) + "%"
+      );
 
       alert("프로필 사진이 업로드되었습니다.");
     } catch (error) {
       const message =
         error.response?.data?.message || "프로필 사진 업로드에 실패했습니다.";
       alert(message);
-      console.error("Image upload error:", error);
+      console.error("❌ Image upload error:", error);
     } finally {
       setIsLoading(false);
     }
