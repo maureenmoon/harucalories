@@ -1,56 +1,42 @@
-import { refreshAccessToken } from "../authIssueUserApi/tokenUtil";
 import axios from "axios";
 
-const instance = axios.create();
+const instance = axios.create({
+  baseURL: "http://localhost:8080",
+  withCredentials: true, // 🔥 This enables cookies to be sent with requests
+});
 
-// ✅ Attach Authorization header
+// ✅ Simplified request interceptor - no manual token handling needed
 instance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  console.log("🔍 Axios interceptor - URL:", config.url);
+  console.log(
+    "🔍 Axios interceptor - withCredentials:",
+    config.withCredentials
+  );
 
-  //no refresh token if undefined or missing
-  if (token && token !== "undefined") {
-    config.headers["Authorization"] = `Bearer ${token}`;
-  }
+  // Cookies will be sent automatically with withCredentials: true
+  // No need to manually set Authorization header
   return config;
 });
 
-// Auto-refresh token on 401 error
+// ✅ Simplified response interceptor - handle 401 errors
 instance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    console.error(
+      "🔍 Axios response error:",
+      error.response?.status,
+      error.response?.data
+    );
 
-    const refreshToken = localStorage.getItem("refreshToken");
-    const shouldTryRefresh =
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      refreshToken &&
-      refreshToken !== "undefined" &&
-      !originalRequest.url.includes("/refresh");
+    if (error.response?.status === 401) {
+      console.log("❌ Authentication failed, redirecting to login");
 
-    // Only try refresh once for a 401 error
-    if (shouldTryRefresh) {
-      originalRequest._retry = true;
+      // Clear any localStorage tokens if they exist
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
 
-      try {
-        await refreshAccessToken(); // new token stored
-        originalRequest.headers["Authorization"] =
-          "Bearer " + localStorage.getItem("accessToken");
-        console.log(
-          "🧪 accessToken in axiosInstance:",
-          localStorage.getItem("accessToken")
-        );
-
-        return instance(originalRequest); // retry original request
-      } catch (refreshError) {
-        console.error("Refresh token failed:", refreshError);
-
-        // Prevent infinite loop by clearing tokens and redirecting
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        //window.location.href = "/login"; // optional redirect
-        return Promise.reject(refreshError); // don't retry again
-      }
+      // Redirect to login page
+      window.location.href = "/member/login";
     }
 
     return Promise.reject(error);
