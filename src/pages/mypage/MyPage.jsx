@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import InfoList from "../../components/mypage/InfoList";
 import ProfileImage from "../../components/mypage/ProfileImage";
@@ -7,12 +7,21 @@ import SubLayout from "../../layout/SubLayout";
 import { fetchCurrentMember } from "../../api/authIssueUserApi/memberApi";
 import useLogout from "../../utils/memberJwtUtil/useLogout";
 import calculateCalories from "../../components/mypage/calculateCalories";
+import { editProfile } from "../../slices/loginSlice";
+import { uploadProfileImage } from "../../utils/imageUpload/uploadImageToSupabase";
+import { updatePhoto } from "../../api/authIssueUserApi/memberApi";
+import { getUserData } from "../../utils/cookieUtils";
 
 export default function MyPage() {
+  const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.login.user);
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const logout = useLogout();
+
+  // Debug: Log current user data
+  console.log("MyPage - Current user data:", currentUser);
+  console.log("MyPage - Photo URL:", currentUser?.photo);
 
   // Calculate recommended calories
   const recommendedCalories =
@@ -30,17 +39,87 @@ export default function MyPage() {
         })
       : null;
 
+  // Handle profile image upload
+  const handleImageChange = async (file) => {
+    try {
+      setIsLoading(true);
+      console.log("🖼️ Starting profile image upload from MyPage...");
+
+      // Upload optimized profile image to Supabase
+      const uploadResult = await uploadProfileImage(file);
+      console.log("✅ Profile image upload result:", uploadResult);
+
+      // Get current user ID from cookies
+      const user = getUserData();
+      if (!user) {
+        throw new Error("User not found in cookies");
+      }
+
+      const memberId = user.memberId || user.id;
+      if (!memberId) {
+        throw new Error("Member ID not found");
+      }
+
+      // Update backend with new photo URL
+      const response = await updatePhoto(uploadResult.imageUrl);
+
+      // Update Redux state with new photo URL
+      dispatch(editProfile({ ...currentUser, photo: uploadResult.imageUrl }));
+
+      console.log("📊 Image optimization stats:");
+      console.log(
+        "   Original size:",
+        (uploadResult.originalSize / 1024).toFixed(2),
+        "KB"
+      );
+      console.log(
+        "   Optimized size:",
+        (uploadResult.optimizedSize / 1024).toFixed(2),
+        "KB"
+      );
+      console.log(
+        "   Compression ratio:",
+        (
+          (1 - uploadResult.optimizedSize / uploadResult.originalSize) *
+          100
+        ).toFixed(1) + "%"
+      );
+
+      alert("프로필 사진이 업로드되었습니다.");
+    } catch (error) {
+      const message =
+        error.response?.data?.message || "프로필 사진 업로드에 실패했습니다.";
+      alert(message);
+      console.error("❌ Image upload error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       try {
-        await fetchCurrentMember(); // Triggers refresh if accessToken is expired
+        const userData = await fetchCurrentMember(); // Triggers refresh if accessToken is expired
+        console.log("MyPage - Fetched user data:", userData);
+
+        // Update Redux state with fresh user data
+        if (userData) {
+          dispatch(
+            editProfile({
+              ...userData,
+              memberId: userData.id || userData.memberId,
+            })
+          );
+        }
       } catch (err) {
         console.error("Failed to fetch current user:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadUser();
-  }, []);
+  }, [dispatch]);
 
   if (!currentUser) return null;
 
@@ -54,7 +133,8 @@ export default function MyPage() {
           <div className="flex flex-col items-center space-y-4">
             <ProfileImage
               currentImage={currentUser.photo}
-              readOnly
+              nickname={currentUser.nickname}
+              onImageChange={handleImageChange}
               size="large"
             />
             <h2 className="text-2xl font-bold">{currentUser.nickname}</h2>
