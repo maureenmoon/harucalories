@@ -1,9 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+//fix redux clean-up: re-login
+const storeUser = JSON.parse(localStorage.getItem("user"));
+
 const emptyUser = {
   email: "",
   nickname: "",
-  userid: null,
+  memberId: null,
   name: "",
   height: null,
   weight: null,
@@ -14,8 +17,8 @@ const emptyUser = {
 };
 
 const initState = {
-  isLoggedIn: false,
-  user: { ...emptyUser },
+  isLoggedIn: !!storeUser,
+  user: storeUser || { ...emptyUser },
 };
 
 const loginSlice = createSlice({
@@ -23,15 +26,25 @@ const loginSlice = createSlice({
   initialState: initState,
   reducers: {
     login: (state, action) => {
+      const updatedUser = { ...state.user, ...action.payload };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
       return {
         isLoggedIn: true,
-        user: { ...action.payload },
+        user: updatedUser,
       };
     },
-    logout: () => ({
-      isLoggedIn: false,
-      user: { ...emptyUser },
-    }),
+    logout: () => {
+      // Clear ALL authentication data
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("loginUser"); // Remove legacy data too
+
+      return {
+        isLoggedIn: false,
+        user: { ...emptyUser },
+      };
+    },
     editProfile: (state, action) => {
       state.user = { ...state.user, ...action.payload };
     },

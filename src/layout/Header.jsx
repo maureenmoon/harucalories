@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../slices/loginSlice";
@@ -7,30 +7,12 @@ function Header() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // get state from redux
-  const reduxNickname = useSelector((state) => state.login.user?.nickname);
-  const reduxEmail = useSelector((state) => state.login.user?.email);
-  const isLoggedInRedux = useSelector((state) => state.login.isLoggedIn);
-
-  // Local login state fallback (from localStorage)
-  const [loginUser, setLoginUser] = useState(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("loginUser");
-    if (stored) {
-      setLoginUser(JSON.parse(stored));
-    }
-  }, []);
-
-  const currentNickname = reduxNickname || loginUser?.nickname;
-  const isLoggedIn = isLoggedInRedux || !!loginUser;
+  // Only use Redux state - no more mixed logic
+  const { user, isLoggedIn } = useSelector((state) => state.login);
 
   const handleLogout = () => {
-    // Clear Redux
+    // Clear Redux (this will also clear localStorage tokens)
     dispatch(logout());
-    // Clear localStorage
-    localStorage.removeItem("loginUser");
-    setLoginUser(null);
     // Redirect
     navigate("/");
   };
@@ -56,7 +38,7 @@ function Header() {
                   to="/mypage"
                   className="font-semibold text-purple-500 hover:underline"
                 >
-                  {currentNickname} 님, 반갑습니다!
+                  {user?.nickname} 님, 반갑습니다!
                 </Link>
               </li>
               <li>

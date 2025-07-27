@@ -1,43 +1,48 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import PurBtn from "../../common/PurBtn";
 import SubLayout from "../../../layout/SubLayout";
 
-const IssueUpdate = () => {
+function IssueUpdate() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useSelector((state) => state.login);
 
-  const [loginUser, setLoginUser] = useState(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [issue, setIssue] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("loginUser");
-    if (!storedUser) {
+    if (!isLoggedIn) {
       alert("로그인이 필요합니다.");
       navigate("/member/login");
       return;
     }
 
-    const user = JSON.parse(storedUser);
-    if (user.role !== "admin") {
-      alert("관리자만 수정할 수 있습니다.");
-      navigate("/community/issue");
-      return;
-    }
-    setLoginUser(user);
+    // Load issue data
+    const storedIssues = JSON.parse(localStorage.getItem("issues")) || [];
+    const foundIssue = storedIssues.find((i) => i.id === parseInt(id));
 
-    const issues = JSON.parse(localStorage.getItem("issues")) || [];
-    const target = issues.find((item) => String(item.id) === id);
-
-    if (!target) {
-      alert("해당 글을 찾을 수 없습니다.");
+    if (!foundIssue) {
+      alert("게시글을 찾을 수 없습니다.");
       navigate("/community/issue");
       return;
     }
 
-    setTitle(target.title);
-    setContent(target.content);
-  }, [id, navigate]);
+    // Check permissions
+    if (foundIssue.writer !== user?.nickname && user?.role !== "admin") {
+      alert("수정 권한이 없습니다.");
+      navigate("/community/issue");
+      return;
+    }
+
+    setIssue(foundIssue);
+    setTitle(foundIssue.title);
+    setContent(foundIssue.content);
+  }, [id, isLoggedIn, user, navigate]);
+
+  if (!isLoggedIn || !issue) return null;
 
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
@@ -108,6 +113,6 @@ const IssueUpdate = () => {
       </div>
     </div>
   );
-};
+}
 
 export default IssueUpdate;

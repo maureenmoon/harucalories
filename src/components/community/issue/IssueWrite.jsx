@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import PurBtn from "../../common/PurBtn";
 import SubLayout from "../../../layout/SubLayout";
 
@@ -7,30 +8,24 @@ function IssueWrite() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const navigate = useNavigate();
-
-  //begin login-user
-  const [loginUser, setLoginUser] = useState(null);
+  const { user, isLoggedIn } = useSelector((state) => state.login);
 
   // 로그인 및 권한 확인
   useEffect(() => {
-    const storedUser = localStorage.getItem("loginUser");
-    if (!storedUser) {
+    if (!isLoggedIn) {
       alert("로그인이 필요합니다.");
       navigate("/member/login");
       return;
     }
 
-    const parsed = JSON.parse(storedUser);
-    if (parsed.role !== "admin") {
+    if (user?.role !== "admin") {
       alert("관리자만 글을 작성할 수 있습니다.");
       navigate("/community/issue");
       return;
     }
-    setLoginUser(parsed);
-  }, []);
+  }, [isLoggedIn, user, navigate]);
 
-  if (!loginUser) return null;
-  //end login-user
+  if (!isLoggedIn || user?.role !== "admin") return null;
 
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
@@ -45,7 +40,7 @@ function IssueWrite() {
       id: issueId,
       title,
       content,
-      writer: loginUser.nickname,
+      writer: user.nickname,
       date: cleanDate,
     };
 
