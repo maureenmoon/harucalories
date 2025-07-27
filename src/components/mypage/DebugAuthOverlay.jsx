@@ -4,8 +4,6 @@ import { useSelector } from "react-redux";
 export default function DebugAuthOverlay() {
   const [visible, setVisible] = useState(false);
   const { isLoggedIn, user } = useSelector((state) => state.login || {});
-  const accessToken = localStorage.getItem("accessToken");
-  const refreshToken = localStorage.getItem("refreshToken");
 
   return (
     <div
@@ -51,16 +49,11 @@ export default function DebugAuthOverlay() {
             <strong>Nickname:</strong> {user?.nickname || "N/A"}
           </div>
           <div>
-            <strong>AccessToken:</strong>{" "}
-            <span style={{ color: accessToken ? "blue" : "gray" }}>
-              {accessToken ? "✔️ exists" : "❌ missing"}
-            </span>
+            <strong>Auth Method:</strong>{" "}
+            <span style={{ color: "blue" }}>Cookie-based</span>
           </div>
           <div>
-            <strong>RefreshToken:</strong>{" "}
-            <span style={{ color: refreshToken ? "blue" : "gray" }}>
-              {refreshToken ? "✔️ exists" : "❌ missing"}
-            </span>
+            <strong>User ID:</strong> {user?.memberId || "N/A"}
           </div>
         </div>
       )}

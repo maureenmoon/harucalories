@@ -1,97 +1,95 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { login as loginAction } from "../../slices/loginSlice";
-// import { login } from "../../slices/loginSlice";
-
-import {
-  validateNickname,
-  validatePassword,
-} from "../../utils/memberJwtUtil/validatos";
 import FormInput from "../../components/mypage/FormInput";
 import {
-  fetchCurrentMember,
   loginMember,
-} from "../../api/authIssueUserApi/memberApi"; // <-- Use new API
-import { jwtDecode } from "jwt-decode";
+  fetchCurrentMember,
+} from "../../api/authIssueUserApi/memberApi";
 import axios from "../../api/authIssueUserApi/axiosInstance";
+import { setAccessToken, setRefreshToken } from "../../utils/cookieUtils";
 
 export default function Login() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+
   const [form, setForm] = useState({
     nickname: "",
     password: "",
   });
 
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!validateNickname(form.nickname)) {
-      newErrors.nickname = "영어소문자 또는 숫자, 4~12자";
+    if (!form.nickname.trim()) {
+      newErrors.nickname = "닉네임을 입력해주세요.";
     }
-
-    if (!validatePassword(form.password)) {
-      newErrors.password = "영어대문자,숫자,특수문자 포함, 4~20자";
+    if (!form.password.trim()) {
+      newErrors.password = "비밀번호를 입력해주세요.";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    //clear any stale tokens before login
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    delete axios.defaults.headers.common["Authorization"];
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-      // calling API
+      console.log("🔐 Attempting login...");
       const res = await loginMember(form.nickname, form.password);
 
-      const { accessToken, refreshToken } = res.data; //JWToken
+      // Extract tokens from response
+      const { accessToken, refreshToken } = res.data;
 
-      // store token to localstorage
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
-      console.log("🔐 accessToken", accessToken);
-      console.log("🔐 refreshToken", refreshToken);
-      console.log("✅ Stored in localStorage", {
-        access: localStorage.getItem("accessToken"),
-        refresh: localStorage.getItem("refreshToken"),
+      console.log("🔐 Login response tokens:", {
+        accessToken: !!accessToken,
+        refreshToken: !!refreshToken,
       });
 
-      //decode token to store user info in Redux
-      // const decoded = jwtDecode(accessToken); //show what is in the token
-      // dispatch(loginAction(decoded)); // Use decoded token info for Redux if needed
-      const user = await fetchCurrentMember(); // GET /me
+      // Store tokens in cookies
+      setAccessToken(accessToken);
+      setRefreshToken(refreshToken);
 
-      // dispatch(loginAction(user)); //createAsyncThunk-handles everything inside
+      console.log("🍪 Tokens stored in cookies");
+      console.log("🔍 Stored accessToken:", accessToken ? "exists" : "missing");
 
+      // Set Authorization header for current session
+      axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+
+      console.log("🔧 Authorization header set on axios defaults");
+
+      // Fetch user data
+      const user = await fetchCurrentMember();
+
+      // Update Redux state
       dispatch(
         loginAction({
           ...user,
-          memberId: user.id, // ✅ rename to avoid 'id' ambiguity
+          memberId: user.id,
+          accessToken,
+          refreshToken,
         })
       );
 
-      // Set default Authorization header for axios
-      axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-
+      console.log("✅ Login successful (cookie-based auth)");
       navigate("/");
     } catch (error) {
       const message = error.response?.data?.message || "로그인에 실패했습니다.";
@@ -157,13 +155,13 @@ export default function Login() {
         </form>
 
         <div className="mt-4 flex justify-between text-sm text-gray-600">
-          <Link to="/member/search-nickname" className="hover:underline">
+          <Link to="/member/search-nickname" className="hover:text-blue-600">
             닉네임 찾기
           </Link>
-          <Link to="/member/reset-password" className="hover:underline">
+          <Link to="/member/change-password" className="hover:text-blue-600">
             비밀번호 변경
           </Link>
-          <Link to="/member/signup" className="hover:underline">
+          <Link to="/member/signup" className="hover:text-blue-600">
             회원가입
           </Link>
         </div>

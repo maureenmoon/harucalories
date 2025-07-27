@@ -17,7 +17,7 @@ export const signupMember = async (memberData, profileImage) => {
   });
 };
 
-// 로그인 (닉네임 기반)
+// 로그인 (cookie-based)
 export const loginMember = async (nickname, password) => {
   try {
     const res = await axios.post(
@@ -36,26 +36,29 @@ export const loginMember = async (nickname, password) => {
   }
 };
 
+// 로그아웃 (cookie-based)
+export const logoutMember = async () => {
+  try {
+    console.log("📡 Calling backend logout endpoint...");
+    const response = await axios.post(`${API_BASE}/logout`);
+    console.log("✅ Backend logout response:", response.status);
+    return response;
+  } catch (error) {
+    console.error(
+      "❌ Backend logout error:",
+      error.response?.status,
+      error.response?.data
+    );
+    // Don't throw the error - let the frontend continue with logout
+    // The backend might not have a logout endpoint yet
+    return null;
+  }
+};
+
 // 현재 로그인된 사용자 정보 가져오기
 export const fetchCurrentMember = async () => {
   const res = await axios.get(`${API_BASE}/me`);
   return res.data;
-};
-
-// 회원 정보 수정 (multipart: data + profileImage)
-export const updateMemberWithImage = async (id, memberData, profileImage) => {
-  const formData = new FormData();
-  formData.append(
-    "data",
-    new Blob([JSON.stringify(memberData)], { type: "application/json" })
-  );
-  if (profileImage) {
-    formData.append("profileImage", profileImage);
-  }
-  // Try POST instead of PUT since signup uses POST /multipart
-  return axios.post(`${API_BASE}/${id}/multipart`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
 };
 
 // 프로필 이미지 변경
@@ -103,23 +106,87 @@ export const searchProfiles = async ({ query }) => {
     .get(`${API_BASE}/search`, { params: { query } })
     .then((res) => res.data);
 };
-
-// 프로필 정보 수정
+// 프로필 정보 수정 (general profile update without image)
 export const updateProfile = async (profileData) => {
-  // Your Spring backend doesn't have profile update endpoints
-  // For now, we'll simulate a successful update and show a message
   console.log("Profile update requested:", profileData);
 
-  // Show user that backend doesn't support profile updates yet
-  alert(
-    "프로필 수정 기능은 현재 백엔드에서 지원되지 않습니다. 개발자에게 문의하세요."
-  );
+  try {
+    // Use axios (which is your configured axiosInstance)
+    const response = await axios.put(`/api/members/me`, profileData, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-  // Return the current user data to prevent errors
-  const userStr = localStorage.getItem("user");
-  if (userStr) {
-    return JSON.parse(userStr);
+    console.log("✅ Profile update successful:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Profile update error:", error);
+
+    if (error.response?.status === 405) {
+      alert(
+        "프로필 수정 기능이 백엔드에서 아직 구현되지 않았습니다.\n\n" +
+          "백엔드 개발자에게 다음 사항을 요청해주세요:\n" +
+          "• MemberController에 PUT /api/members/me 엔드포인트 추가\n" +
+          "• 프로필 업데이트 서비스 메서드 구현\n\n" +
+          "Spring 로그: 'Request method PUT is not supported'"
+      );
+    } else if (error.response?.status === 401) {
+      alert("인증이 필요합니다. 다시 로그인해주세요.");
+    } else if (error.response?.status === 403) {
+      alert("접근 권한이 없습니다.");
+    } else {
+      const message =
+        error.response?.data?.message || "프로필 수정에 실패했습니다.";
+      alert(message);
+    }
+
+    throw error;
+  }
+};
+
+// 회원 정보 수정 (multipart: data + profileImage)
+export const updateMemberWithImage = async (id, memberData, profileImage) => {
+  console.log("Profile update with image requested:", {
+    id,
+    memberData,
+    hasImage: !!profileImage,
+  });
+
+  const formData = new FormData();
+  formData.append(
+    "data",
+    new Blob([JSON.stringify(memberData)], { type: "application/json" })
+  );
+  if (profileImage) {
+    formData.append("profileImage", profileImage);
   }
 
-  throw new Error("Profile updates not supported by backend");
+  try {
+    // Use axios (which is your configured axiosInstance)
+    const response = await axios.put(`/api/members/${id}/multipart`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log("✅ Profile update with image successful:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Profile update with image error:", error);
+
+    if (error.response?.status === 401) {
+      alert("인증이 필요합니다. 다시 로그인해주세요.");
+    } else if (error.response?.status === 403) {
+      alert("접근 권한이 없습니다.");
+    } else if (error.response?.status === 404) {
+      alert("회원을 찾을 수 없습니다.");
+    } else {
+      const message =
+        error.response?.data?.message || "프로필 수정에 실패했습니다.";
+      alert(message);
+    }
+
+    throw error;
+  }
 };

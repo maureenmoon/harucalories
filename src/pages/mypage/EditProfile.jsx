@@ -11,6 +11,7 @@ import {
   updatePhoto,
   updateMemberWithImage,
 } from "../../api/authIssueUserApi/memberApi";
+import { getUserData } from "../../utils/cookieUtils";
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -52,13 +53,12 @@ export default function EditProfile() {
     try {
       setIsLoading(true);
 
-      // Get current user ID
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
-        throw new Error("User not found in localStorage");
+      // Get current user ID from cookies
+      const user = getUserData();
+      if (!user) {
+        throw new Error("User not found in cookies");
       }
 
-      const user = JSON.parse(userStr);
       const memberId = user.memberId || user.id;
 
       if (!memberId) {
