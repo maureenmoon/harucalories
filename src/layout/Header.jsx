@@ -19,7 +19,7 @@ function Header() {
     <div className="flex justify-between w-full items-center mx-auto bg-white px-3">
       <div className="container flex justify-between w-[1020px] py-2 items-center mx-auto">
         <h1>
-          <Link to="/">
+          <Link to="/dashboard">
             <img
               src="/images/main_icon.png"
               alt="main icon"

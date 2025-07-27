@@ -1,6 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import SubLayout from "../../layout/SubLayout";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setMealRecords } from "../../slices/mealSlice";
 import axios from "axios";
 
 function Analyis() {
@@ -11,7 +12,12 @@ function Analyis() {
   const [resultData, setResultData] = useState([]); //음식 이름 저장
   const [isLoading, setIsLoading] = useState(false); //로딩창
   const [images, setImages] = useState([]); //추가 이미지
-  const [mealRecords, setMealRecords] = useState([]); //기록 저장
+  const mealRecords = useSelector((state) => state.meal.mealRecords);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    setTimestamp(new Date());
+  }, []);
 
   const handleImageClick = (e) => {
     fileInputRef.current?.click();
@@ -136,9 +142,8 @@ function Analyis() {
       fat: totalNutrition.fat,
     };
 
-    const prev = JSON.parse(localStorage.getItem("mealRecords") || "[]");
-    localStorage.setItem("mealRecords", JSON.stringify([...prev, record]));
-
+    // Redux에 저장
+    dispatch(setMealRecords([...mealRecords, record]));
     alert("식사 기록이 저장되었습니다.");
   };
   return (
@@ -149,17 +154,14 @@ function Analyis() {
         <div className="flex flex-row sm:flex-row gap-2 mb-4">
           <input
             type="text"
-            value={timestamp ? formatDate(timestamp) : ""}
-            readOnly
-            className="input input-bordered-full flex-1 text-center"
+            placeholder="날짜를 입력해 주세요"
+            className="input input-bordered flex-1 text-center"
           />
           <input
             type="text"
-            value={timestamp ? formatTime(timestamp) : ""}
-            readOnly
+            placeholder="시간을 입력해 주세요"
             className="input input-bordered flex-1 text-center"
           />
-
           <input
             type="text"
             value={selectedMeal}
@@ -293,12 +295,14 @@ function Analyis() {
           </div>
         ))}
 
-        <button
-          className="btn bg-purple-500 text-white w-full rounded-lg py-6 text-base"
-          onClick={handleSaveMeal}
-        >
-          기록하기
-        </button>
+        <div className="pt-8">
+          <button
+            className="btn bg-purple-500 text-white w-full rounded-lg py-6 text-base"
+            onClick={handleSaveMeal}
+          >
+            기록하기
+          </button>
+        </div>
       </div>
 
       {isLoading && (

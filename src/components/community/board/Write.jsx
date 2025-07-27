@@ -1,39 +1,53 @@
 import React, { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+// import { useSelector } from "react-redux"; // 테스트용: Redux 의존성 제거
 import PurBtn from "../../common/PurBtn";
 import SubLayout from "../../../layout/SubLayout";
+import { createBoard } from "../../../api/board/boardApi";
 
 function Write() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  // const user = useSelector((state) => state.login.user); // 테스트용: Redux 의존성 제거
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
       alert("제목과 내용을 모두 작성해주세요.");
       return;
     }
 
-    const postId = Date.now();
-    const rawDate = new Date().toLocaleDateString("ko-KR");
-    const cleanDate = rawDate.endsWith(".") ? rawDate.slice(0, -1) : rawDate;
-    const newPost = {
-      id: postId,
-      title,
-      content,
-      writer: "홍길동", // 임시 작성자
-      date: cleanDate,
-    };
+    // 테스트용: 로그인 체크 주석처리
+    // if (!user || !user.userid) {
+    //   alert("로그인이 필요합니다.");
+    //   return;
+    // }
 
-    // 기존 posts 가져오기
-    const existing = JSON.parse(localStorage.getItem("posts")) || [];
+    try {
+      setLoading(true);
 
-    // 새 글 추가
-    const updated = [...existing, newPost];
-    localStorage.setItem("posts", JSON.stringify(updated));
+      const boardData = {
+        title: title.trim(),
+        content: content.trim(),
+      };
 
-    alert("게시글이 등록되었습니다!");
-    navigate(`/community/board/writeview/${newPost.id}`);
+      // 테스트용: 하드코딩된 memberId 사용 (DB의 실제 memberId)
+      const testMemberId = 9;
+      console.log("게시글 작성 요청:", { memberId: testMemberId, boardData });
+
+      // 실제 API 호출
+      const response = await createBoard(testMemberId, boardData);
+      console.log("게시글 작성 성공:", response);
+
+      alert("게시글이 등록되었습니다!");
+      navigate(`/community/board/writeview/${response.id}`);
+    } catch (error) {
+      console.error("게시글 작성 실패:", error);
+      alert("게시글 작성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,10 +131,15 @@ function Write() {
           </button>
           <button
             onClick={handleSubmit}
-            className="px-6 py-2.5 rounded-lg bg-purple-500 text-white hover:bg-purple-600 
-                     transition-colors duration-200 text-sm sm:text-base"
+            disabled={loading}
+            className={`px-6 py-2.5 rounded-lg text-white transition-colors duration-200 text-sm sm:text-base
+                     ${
+                       loading
+                         ? "bg-gray-400 cursor-not-allowed"
+                         : "bg-purple-500 hover:bg-purple-600"
+                     }`}
           >
-            작성완료
+            {loading ? "작성 중..." : "작성완료"}
           </button>
         </div>
       </div>
