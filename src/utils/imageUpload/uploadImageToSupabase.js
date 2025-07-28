@@ -90,10 +90,12 @@ export async function compressAndUploadImage(
 
     if (mainError) throw mainError;
 
-    // Get main image URL
-    const { data: mainImageURL } = supabase.storage
-      .from(SUPABASE_BUCKET_NAME)
-      .getPublicUrl(mainImagePath);
+    // Manually construct the main image URL to avoid corruption
+    // Use environment variable directly if client URL is corrupted
+    const baseUrl =
+      import.meta.env.VITE_SUPABASE_URL ||
+      "https://admehgvqowpibiuwugpv.supabase.co";
+    const mainImageURL = `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${mainImagePath}`;
 
     let thumbnailURL = null;
 
@@ -118,11 +120,8 @@ export async function compressAndUploadImage(
 
       if (thumbError) throw thumbError;
 
-      const { data: thumbURL } = supabase.storage
-        .from(SUPABASE_BUCKET_NAME)
-        .getPublicUrl(thumbnailPath);
-
-      thumbnailURL = thumbURL.publicUrl;
+      // Manually construct the thumbnail URL to avoid corruption
+      thumbnailURL = `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${thumbnailPath}`;
     }
 
     console.log("✅ Image upload completed successfully");
@@ -132,7 +131,7 @@ export async function compressAndUploadImage(
     );
 
     return {
-      mainImageUrl: mainImageURL.publicUrl,
+      mainImageUrl: mainImageURL,
       thumbnailUrl: thumbnailURL,
       fileName: optimizedFileName,
       originalSize: file.size,
@@ -178,22 +177,38 @@ export async function uploadProfileImage(file) {
 
     if (error) throw error;
 
-    const { data: publicURL } = supabase.storage
-      .from(SUPABASE_BUCKET_NAME)
-      .getPublicUrl(profileImagePath);
+    // Debug: Check what URL is being used
+    console.log("🔧 DEBUG: Supabase URL from client:", supabase.supabaseUrl);
+    console.log(
+      "🔧 DEBUG: Supabase URL from env:",
+      import.meta.env.VITE_SUPABASE_URL
+    );
+
+    // Manually construct the public URL to avoid corruption
+    // Use environment variable directly if client URL is corrupted
+    const baseUrl =
+      import.meta.env.VITE_SUPABASE_URL ||
+      "https://admehgvqowpibiuwugpv.supabase.co";
+    const publicURL = `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${profileImagePath}`;
 
     console.log("✅ Profile image upload completed successfully");
+    console.log("🔗 Generated public URL:", publicURL);
     console.log(
       "📊 Compression ratio:",
       ((1 - optimizedImage.size / file.size) * 100).toFixed(1) + "%"
     );
 
-    return {
-      imageUrl: publicURL.publicUrl,
+    const result = {
+      imageUrl: publicURL,
       fileName: optimizedFileName,
       originalSize: file.size,
       optimizedSize: optimizedImage.size,
     };
+
+    console.log("🔧 DEBUG: Result object before return:", result);
+    console.log("🔧 DEBUG: Result imageUrl before return:", result.imageUrl);
+
+    return result;
   } catch (err) {
     console.error("❌ Profile image upload failed:", err);
     throw err;
@@ -233,3 +248,97 @@ export const getMainImageUrl = (thumbnailUrl) => {
 
   return thumbnailUrl;
 };
+
+// Delete image from Supabase storage
+export const deleteImage = async (imageUrl) => {
+  if (!imageUrl) {
+    console.log("⚠️ No image URL provided for deletion");
+    return;
+  }
+
+  try {
+    console.log("🗑️ Attempting to delete image:", imageUrl);
+
+    // Extract file path from URL
+    const urlParts = imageUrl.split("/");
+    const bucketIndex = urlParts.findIndex(
+      (part) => part === SUPABASE_BUCKET_NAME
+    );
+
+    if (bucketIndex === -1) {
+      console.log("⚠️ Could not extract file path from URL");
+      return;
+    }
+
+    // Get the file path after the bucket name
+    const filePath = urlParts.slice(bucketIndex + 1).join("/");
+    console.log("📁 Extracted file path:", filePath);
+
+    // Delete the main image
+    const { error: mainError } = await supabase.storage
+      .from(SUPABASE_BUCKET_NAME)
+      .remove([filePath]);
+
+    if (mainError) {
+      console.error("❌ Error deleting main image:", mainError);
+    } else {
+      console.log("✅ Main image deleted successfully");
+    }
+
+    // Also try to delete thumbnail if it exists
+    const thumbnailPath = getThumbnailUrl(imageUrl);
+    if (thumbnailPath && thumbnailPath !== imageUrl) {
+      const thumbnailUrlParts = thumbnailPath.split("/");
+      const thumbnailFilePath = thumbnailUrlParts
+        .slice(
+          thumbnailUrlParts.findIndex((part) => part === SUPABASE_BUCKET_NAME) +
+            1
+        )
+        .join("/");
+
+      const { error: thumbnailError } = await supabase.storage
+        .from(SUPABASE_BUCKET_NAME)
+        .remove([thumbnailFilePath]);
+
+      if (thumbnailError) {
+        console.log(
+          "⚠️ Thumbnail not found or already deleted:",
+          thumbnailError.message
+        );
+      } else {
+        console.log("✅ Thumbnail deleted successfully");
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error deleting image:", error);
+    // Don't throw error - we don't want image deletion to break the upload process
+  }
+};
+
+// Upload profile image with automatic cleanup of old image
+export async function uploadProfileImageWithCleanup(file, oldImageUrl = null) {
+  try {
+    // Upload new image first
+    const uploadResult = await uploadProfileImage(file);
+
+    console.log(
+      "🔧 DEBUG: Upload result from uploadProfileImage:",
+      uploadResult
+    );
+    console.log("🔧 DEBUG: Upload result imageUrl:", uploadResult.imageUrl);
+
+    // If upload successful and we have an old image, delete it
+    if (uploadResult.imageUrl && oldImageUrl) {
+      console.log("🧹 Cleaning up old profile image...");
+      await deleteImage(oldImageUrl);
+    }
+
+    console.log("🔧 DEBUG: Final result before return:", uploadResult);
+    console.log("🔧 DEBUG: Final result imageUrl:", uploadResult.imageUrl);
+
+    return uploadResult;
+  } catch (error) {
+    console.error("❌ Profile image upload with cleanup failed:", error);
+    throw error;
+  }
+}

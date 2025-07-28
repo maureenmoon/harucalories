@@ -14,10 +14,12 @@ import SubLayout from "../../layout/SubLayout";
 import { fetchCurrentMember } from "../../api/authIssueUserApi/memberApi";
 import useLogout from "../../utils/memberJwtUtil/useLogout";
 import calculateCalories from "../../components/mypage/calculateCalories";
-import { editProfile } from "../../slices/loginSlice";
-import { uploadProfileImage } from "../../utils/imageUpload/uploadImageToSupabase";
+import {
+  editProfile,
+  updatePhoto as updatePhotoRedux,
+} from "../../slices/loginSlice";
+import { uploadProfileImageWithCleanup } from "../../utils/imageUpload/uploadImageToSupabase";
 import { updatePhoto } from "../../api/authIssueUserApi/memberApi";
-import { getUserData } from "../../utils/cookieUtils";
 
 export default function MyPage() {
   const dispatch = useDispatch();
@@ -52,26 +54,38 @@ export default function MyPage() {
       setIsLoading(true);
       console.log("🖼️ Starting profile image upload from MyPage...");
 
-      // Upload optimized profile image to Supabase
-      const uploadResult = await uploadProfileImage(file);
-      console.log("✅ Profile image upload result:", uploadResult);
+      // Get current image URL for cleanup
+      const currentImageUrl = currentUser.photo || currentUser.profileImageUrl;
+      console.log("🖼️ Current image URL for cleanup:", currentImageUrl);
 
-      // Get current user ID from cookies
-      const user = getUserData();
-      if (!user) {
-        throw new Error("User not found in cookies");
+      // Upload optimized profile image to Supabase with cleanup
+      const uploadResult = await uploadProfileImageWithCleanup(
+        file,
+        currentImageUrl
+      );
+      console.log("✅ Profile image upload result:", uploadResult);
+      console.log("🔧 DEBUG: MyPage received imageUrl:", uploadResult.imageUrl);
+
+      // Get current user ID from Redux state (which is already available)
+      if (!currentUser) {
+        throw new Error("User not found in Redux state");
       }
 
-      const memberId = user.memberId || user.id;
+      const memberId = currentUser.memberId || currentUser.id;
       if (!memberId) {
-        throw new Error("Member ID not found");
+        throw new Error("Member ID not found in user data");
       }
 
       // Update backend with new photo URL
-      const response = await updatePhoto(uploadResult.imageUrl);
+      await updatePhoto(uploadResult.imageUrl);
 
-      // Update Redux state with new photo URL
-      dispatch(editProfile({ ...currentUser, photo: uploadResult.imageUrl }));
+      // Fetch updated user data from backend
+      const updatedUserData = await fetchCurrentMember();
+
+      // Update Redux state with fresh user data
+      if (updatedUserData) {
+        dispatch(editProfile(updatedUserData));
+      }
 
       console.log("📊 Image optimization stats:");
       console.log(
@@ -150,6 +164,7 @@ export default function MyPage() {
           {/* Profile Section */}
           <div className="flex flex-col items-center space-y-4">
             <ProfileImage
+              photo={currentUser.photo}
               currentImage={currentUser.photo}
               nickname={currentUser.nickname}
               onImageChange={handleImageChange}

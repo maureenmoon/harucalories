@@ -82,7 +82,15 @@ export const updateProfileImage = async (id, profileImage) => {
 
 // Supabase에서 받은 public URL을 백엔드로 전송 (MySQL에 저장됨)
 export const updatePhoto = async (photoUrl) => {
-  return axios.patch(`${API_BASE}/me/profile-image`, { photoUrl });
+  try {
+    const response = await axios.patch(`${API_BASE}/me/profile-image`, {
+      photoUrl: photoUrl,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating photo:", error);
+    throw error;
+  }
 };
 
 // 회원 탈퇴 (내 계정)
