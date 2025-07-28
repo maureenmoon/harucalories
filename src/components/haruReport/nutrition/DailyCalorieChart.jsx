@@ -29,8 +29,6 @@ const DailyCalorieChart = ({ data = [], period = "week" }) => {
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
-  console.log("🔍 DailyCalorieChart 받은 데이터:", data);
-
   // 실제 데이터가 없으면 기본 데이터 사용
   const chartData =
     data.length > 0

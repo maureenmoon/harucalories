@@ -10,7 +10,6 @@ export const fetchMealsByMemberId = async (memberId) => {
     );
     return response.data;
   } catch (error) {
-    console.error("식사 데이터 가져오기 실패:", error);
     throw error;
   }
 };
@@ -23,7 +22,6 @@ export const fetchMealsByDate = async (memberId, date) => {
     );
     return response.data;
   } catch (error) {
-    console.error(`${date} 식사 데이터 가져오기 실패:`, error);
     throw error;
   }
 };
@@ -37,16 +35,9 @@ export const fetchMonthlyMeals = async (memberId, year, month) => {
         month + 1
       }`
     );
-    console.log(
-      "🔍 월별 API 호출:",
-      `${API_BASE_URL}/meals/monthly/member/${memberId}?year=${year}&month=${
-        month + 1
-      }`
-    );
-    console.log("🔍 월별 API 응답:", response.data);
+
     return response.data;
   } catch (error) {
-    console.error("월별 식사 데이터 가져오기 실패:", error);
     throw error;
   }
 };
@@ -57,14 +48,9 @@ export const fetchMealsByDateRange = async (memberId, startDate, endDate) => {
     const response = await axios.get(
       `${API_BASE_URL}/meals/date-range/member/${memberId}?startDate=${startDate}&endDate=${endDate}`
     );
-    console.log(
-      "🔍 날짜 범위 API 호출:",
-      `${API_BASE_URL}/meals/date-range/member/${memberId}?startDate=${startDate}&endDate=${endDate}`
-    );
-    console.log("🔍 날짜 범위 API 응답:", response.data);
+
     return response.data;
   } catch (error) {
-    console.error("날짜 범위 식사 데이터 가져오기 실패:", error);
     throw error;
   }
 };
@@ -72,8 +58,6 @@ export const fetchMealsByDateRange = async (memberId, startDate, endDate) => {
 // 🔥 기존 API 활용한 월별 데이터 수집 (대안 방법)
 export const fetchMonthlyMealsAlternative = async (memberId, year, month) => {
   try {
-    console.log("🔍 대안 방법으로 월별 데이터 수집 시작:", year, month + 1);
-
     // 해당 월의 첫째 날과 마지막 날 계산
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0); // 다음 달 0일 = 이번 달 마지막 날
@@ -83,7 +67,6 @@ export const fetchMonthlyMealsAlternative = async (memberId, year, month) => {
 
     // 🔥 방법 1: 전체 멤버 데이터 가져와서 필터링 시도
     try {
-      console.log("🔍 전체 멤버 데이터로 시도...");
       const allMemberMeals = await fetchMealsByMemberId(memberId);
 
       if (allMemberMeals && Array.isArray(allMemberMeals)) {
@@ -97,11 +80,6 @@ export const fetchMonthlyMealsAlternative = async (memberId, year, month) => {
         });
 
         if (monthlyFiltered.length > 0) {
-          console.log(
-            "✅ 전체 데이터에서 월별 필터링 성공:",
-            monthlyFiltered.length,
-            "개"
-          );
           return monthlyFiltered;
         }
       }
@@ -110,7 +88,7 @@ export const fetchMonthlyMealsAlternative = async (memberId, year, month) => {
     }
 
     // 🔥 방법 2: 날짜별로 순차 호출 (주요 날짜들만)
-    console.log("🔍 주요 날짜별 호출 시도...");
+
     const sampleDates = [1, 7, 14, 21, 28]; // 월의 대표 날짜들
 
     for (const day of sampleDates) {
@@ -129,10 +107,8 @@ export const fetchMonthlyMealsAlternative = async (memberId, year, month) => {
       }
     }
 
-    console.log("🔍 대안 방법 수집 결과:", allMeals.length, "개");
     return allMeals;
   } catch (error) {
-    console.error("대안 월별 데이터 수집 실패:", error);
     throw error;
   }
 };

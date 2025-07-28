@@ -59,7 +59,7 @@ export default function Login() {
       // ✅ Cookie-based authentication - tokens are in cookies, not response data
       console.log("🔐 Login response status:", res.status);
       console.log("🍪 Cookies should be set by backend");
-
+      console.log("**************************************", res);
       // ✅ Don't try to extract tokens from response data
       // The backend sets cookies directly, so we don't need to handle tokens manually
 

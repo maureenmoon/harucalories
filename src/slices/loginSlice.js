@@ -30,19 +30,19 @@ const emptyUser = {
   photo: "",
 };
 
-// 임시 테스트용 - DB의 실제 회원 정보
-const testUser = {
-  email: "test@example.com",
-  nickname: "테스트사용자",
-  userid: 1, // DB의 실제 memberId와 일치
-  name: "홍길동",
-  height: 170,
-  weight: 70,
-  targetCalories: 2000,
-  activityLevel: "보통",
-  role: "USER",
-  photo: "",
-};
+// // 임시 테스트용 - DB의 실제 회원 정보
+// const testUser = {
+//   email: "test@example.com",
+//   nickname: "테스트사용자",
+//   userid: 1, // DB의 실제 memberId와 일치
+//   name: "홍길동",
+//   height: 170,
+//   weight: 70,
+//   targetCalories: 2000,
+//   activityLevel: "보통",
+//   role: "USER",
+//   photo: "",
+// };
 
 const initState = {
   isLoggedIn: !!(storeUser && hasTokens),
@@ -69,6 +69,10 @@ const loginSlice = createSlice({
       // Store tokens in cookies if provided
       if (action.payload.accessToken) {
         setAccessToken(action.payload.accessToken);
+        console.log(
+          "🔍 loginSlice - accessToken 저장:",
+          action.payload.accessToken
+        );
       }
       if (action.payload.refreshToken) {
         setRefreshToken(action.payload.refreshToken);

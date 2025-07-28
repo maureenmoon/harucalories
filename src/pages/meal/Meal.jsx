@@ -35,27 +35,16 @@ function Meal() {
   // 목표 칼로리 (임시로 2000으로 설정)
   const calorieGoal = 2000;
 
-  console.log("🔍 Meal.jsx - Redux selectedDate:", selectedDate);
-  console.log("🔍 Meal.jsx - Redux mealRecords:", mealRecords);
-  console.log("🔍 Meal.jsx - Redux 영양소:", {
-    totalKcal,
-    totalCarbs,
-    totalProtein,
-    totalFat,
-  });
-
   // 날짜 변경 함수
   const changeDate = (days) => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + days);
     const newDateString = newDate.toISOString().slice(0, 10);
     dispatch(setSelectedDate(newDateString));
-    console.log("🔍 날짜 변경:", newDateString);
   };
 
   // 카드 클릭 핸들러
   const handleCardClick = (record) => {
-    console.log("카드 클릭:", record);
     // 필요시 상세 보기 모달 등을 열 수 있습니다
   };
 
@@ -65,14 +54,11 @@ function Meal() {
 
     dispatch(setLoading(true));
     dispatch(clearError());
-    console.log("🔍 식사 기록 로드 시작 - 날짜:", selectedDate);
 
     try {
       const response = await axios.get(
         `/api/meals/modified-date/member/${memberId}?date=${selectedDate}`
       );
-
-      console.log("🔍 API 응답:", response.data);
 
       if (response.data) {
         // 데이터 가공
@@ -81,8 +67,6 @@ function Meal() {
           : response.data.data || [];
 
         const transformedData = processedData.map((record) => {
-          console.log("🔍 개별 record 가공:", record);
-
           // mealType → type 변환
           const convertMealType = (mealType) => {
             const typeMap = {
@@ -125,8 +109,6 @@ function Meal() {
             calories: recordCalories,
           };
         });
-
-        console.log("🔍 가공된 데이터:", transformedData);
 
         // Redux에 저장
         dispatch(setMealRecords(transformedData));
@@ -178,13 +160,6 @@ function Meal() {
             totalFat: totalFatSum,
           })
         );
-
-        console.log("🔍 계산된 전체 영양소:", {
-          totalKcal: totalCalories,
-          totalCarbs: totalCarbsSum,
-          totalProtein: totalProteinSum,
-          totalFat: totalFatSum,
-        });
       }
     } catch (err) {
       console.error("🚨 식사 기록 불러오기 실패:", err);

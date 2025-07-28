@@ -5,9 +5,6 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
   const safeSelectedDate =
     selectedDate && !isNaN(selectedDate.getTime()) ? selectedDate : new Date();
 
-  console.log("🔍 Calendar - 받은 selectedDate:", selectedDate);
-  console.log("🔍 Calendar - 안전한 selectedDate:", safeSelectedDate);
-
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
   };
@@ -48,7 +45,6 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
   const year = safeSelectedDate.getFullYear();
   const month = safeSelectedDate.getMonth();
 
-  console.log("🔍 Calendar - year:", year, "month:", month);
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
   const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -90,11 +86,6 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
           onClick={() => {
             // 🔥 안전한 Date 객체 생성
             const clickedDate = new Date(year, month, day);
-            console.log("🔍 Calendar - 클릭된 날짜 생성:", clickedDate);
-            console.log(
-              "🔍 Calendar - 날짜 유효성:",
-              !isNaN(clickedDate.getTime())
-            );
 
             if (!isNaN(clickedDate.getTime())) {
               onDateClick(clickedDate);

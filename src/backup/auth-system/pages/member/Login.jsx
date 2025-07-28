@@ -92,7 +92,7 @@ export default function Login() {
       // Set default Authorization header for axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       const message = error.response?.data?.message || "로그인에 실패했습니다.";
       alert(message);

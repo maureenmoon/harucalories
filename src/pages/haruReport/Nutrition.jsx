@@ -24,10 +24,18 @@ const Nutrition = () => {
 
   // 기간 선택 상태
   const [period, setPeriod] = useState("week"); // 'week' | 'month'
-  const [selectedDate, setSelectedDate] = useState(() => new Date()); // 월 변경용
-  const [selectedDetailDate, setSelectedDetailDate] = useState(
-    () => new Date()
-  ); // 오늘의 칼로리용 날짜 선택
+  // 🔥 실제 데이터 확인을 위해 현재 날짜 사용
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+
+    return today;
+  }); // 월 변경용
+
+  const [selectedDetailDate, setSelectedDetailDate] = useState(() => {
+    // 🔥 현재 날짜 사용
+    const today = new Date();
+    return today;
+  }); // 오늘의 칼로리용 날짜 선택
 
   // Redux에서 월별 데이터 가져오기 (기록습관과 동일)
   const monthlyMealRecords = useSelector(
@@ -35,6 +43,10 @@ const Nutrition = () => {
   );
   const { isMonthlyLoading, monthlyError, currentMonth, currentYear } =
     useSelector((state) => state.meal);
+
+  // 🔥 로그인된 사용자 정보 가져오기
+  const { isLoggedIn, user } = useSelector((state) => state.login);
+  const memberId = user?.userid || user?.memberId || 1; // 기본값 1
 
   // 월 변경 함수
   const changeMonth = (direction) => {
@@ -62,15 +74,14 @@ const Nutrition = () => {
 
   // 🔥 월별 데이터 로드 로직 (Record.jsx와 동일)
   useEffect(() => {
+    // 🔥 로그인하지 않은 경우 API 호출 중단
+    if (!isLoggedIn || !memberId) {
+      return;
+    }
+
     const loadMonthlyData = async () => {
       const targetMonth = selectedDate.getMonth();
       const targetYear = selectedDate.getFullYear();
-
-      console.log(
-        "🔍 Nutrition - 월별 데이터 로드 시작:",
-        targetYear,
-        targetMonth + 1
-      );
 
       // 이미 해당 월 데이터가 있고, Redux 월과 일치하면 스킵
       if (
@@ -78,7 +89,6 @@ const Nutrition = () => {
         currentYear === targetYear &&
         monthlyMealRecords.length > 0
       ) {
-        console.log("🔍 Nutrition - 이미 해당 월 데이터 존재, 스킵");
         return;
       }
 
@@ -90,7 +100,11 @@ const Nutrition = () => {
         // 🔥 방법 1: 월별 API 시도
         let monthlyData;
         try {
-          monthlyData = await fetchMonthlyMeals(1, targetYear, targetMonth); // memberId=1
+          monthlyData = await fetchMonthlyMeals(
+            memberId,
+            targetYear,
+            targetMonth
+          ); // 실제 memberId 사용
         } catch (monthlyApiError) {
           // 🔥 방법 2: 날짜 범위 API로 대체
           try {
@@ -102,11 +116,15 @@ const Nutrition = () => {
               2,
               "0"
             )}-31`;
-            monthlyData = await fetchMealsByDateRange(1, startDate, endDate);
+            monthlyData = await fetchMealsByDateRange(
+              memberId,
+              startDate,
+              endDate
+            );
           } catch (dateRangeError) {
             // 🔥 방법 3: 기존 API 활용 대안 방법
             monthlyData = await fetchMonthlyMealsAlternative(
-              1,
+              memberId,
               targetYear,
               targetMonth
             );
@@ -114,13 +132,12 @@ const Nutrition = () => {
         }
 
         // 🔥 데이터 가공 (Record.jsx와 동일한 로직) - carbohydrate 필드명 적용
+
         const processedData = Array.isArray(monthlyData)
           ? monthlyData
           : monthlyData.data || [];
 
         const transformedData = processedData.map((record) => {
-          console.log("🔍 Nutrition - 월별 데이터 가공:", record);
-
           // mealType → type 변환
           const convertMealType = (mealType) => {
             const typeMap = {
@@ -155,14 +172,6 @@ const Nutrition = () => {
           const finalProtein = record.totalProtein || recordProtein;
           const finalFat = record.totalFat || recordFat;
 
-          console.log("🔍 Nutrition - 영양소 계산 결과:", {
-            원본totalCarbs: record.totalCarbs,
-            foods계산carbohydrate: recordCarbs,
-            최종탄수화물: finalCarbs,
-            원본totalKcal: record.totalKcal,
-            최종칼로리: finalCalories,
-          });
-
           // 날짜 필드 설정
           const dateField =
             record.modifiedAt ||
@@ -186,7 +195,6 @@ const Nutrition = () => {
 
         dispatch(setMonthlyMealRecords(transformedData));
       } catch (error) {
-        console.error("🚨 Nutrition - 월별 데이터 로드 실패:", error);
         dispatch(setMonthlyError("월별 식사 기록을 불러오는데 실패했습니다."));
       } finally {
         dispatch(setMonthlyLoading(false));
@@ -194,7 +202,7 @@ const Nutrition = () => {
     };
 
     loadMonthlyData();
-  }, [selectedDate, dispatch]);
+  }, [selectedDate, dispatch, memberId, isLoggedIn]);
 
   // 기간별 데이터 필터링 함수 - 단순화
   const getFilteredData = () => {
@@ -235,30 +243,15 @@ const Nutrition = () => {
   // 🔍 원본 데이터 구조 확인을 위한 디버깅 함수 추가
   const debugOriginalData = () => {
     if (monthlyMealRecords.length > 0) {
-      console.log(
-        "🔍 원본 monthlyMealRecords 첫 번째 데이터:",
-        monthlyMealRecords[0]
-      );
-
       // foods 배열도 확인
       if (
         monthlyMealRecords[0].foods &&
         monthlyMealRecords[0].foods.length > 0
       ) {
-        console.log(
-          "🔍 원본 foods 첫 번째 데이터:",
-          monthlyMealRecords[0].foods[0]
-        );
-        console.log(
-          "🔍 원본 foods 첫 번째 데이터의 모든 키:",
-          Object.keys(monthlyMealRecords[0].foods[0])
-        );
       }
 
       // 몇 개 더 확인
-      monthlyMealRecords.slice(0, 3).forEach((record, index) => {
-        console.log(`🔍 원본 record[${index}] 전체:`, record);
-      });
+      monthlyMealRecords.slice(0, 3).forEach((record, index) => {});
     }
   };
 
@@ -345,8 +338,6 @@ const Nutrition = () => {
   // 영양소 밸런스 데이터 계산 - 정확한 필드명으로 수정
   const getNutritionBalanceData = () => {
     const filteredData = getFilteredData();
-    console.log("🔍 getNutritionBalanceData 시작");
-    console.log("🔍 필터링된 데이터 개수:", filteredData.length);
 
     const totals = filteredData.reduce(
       (acc, record) => {
@@ -378,24 +369,6 @@ const Nutrition = () => {
         recordProtein = directProtein > 0 ? directProtein : foodsProtein;
         recordFat = directFat > 0 ? directFat : foodsFat;
 
-        console.log(`🔍 record ${record.type} 영양소 계산:`, {
-          직접값: {
-            totalCarbs: directCarbs,
-            totalProtein: directProtein,
-            totalFat: directFat,
-          },
-          foods계산: {
-            carbohydrate합계: foodsCarbs,
-            protein합계: foodsProtein,
-            fat합계: foodsFat,
-          },
-          최종사용: {
-            carbs: recordCarbs,
-            protein: recordProtein,
-            fat: recordFat,
-          },
-        });
-
         acc.carbs += recordCarbs;
         acc.protein += recordProtein;
         acc.fat += recordFat;
@@ -405,44 +378,25 @@ const Nutrition = () => {
       { carbs: 0, protein: 0, fat: 0 }
     );
 
-    console.log("🔍 getNutritionBalanceData 최종 결과:", totals);
     return totals;
   };
 
   // 🔍 영양소 원본 데이터 확인 함수 - 정확한 필드명으로 수정
   const debugNutritionData = () => {
-    console.log("🔍 영양소 원본 데이터 디버깅 시작");
-
     if (monthlyMealRecords.length === 0) {
-      console.log("🚨 monthlyMealRecords가 비어있습니다!");
       return;
     }
 
     // 첫 번째 record 상세 분석
     const firstRecord = monthlyMealRecords[0];
-    console.log("🔍 첫 번째 record 영양소 필드들:", {
-      totalCarbs: firstRecord.totalCarbs, // 🔥 Record 레벨
-      totalProtein: firstRecord.totalProtein,
-      totalFat: firstRecord.totalFat,
-      totalKcal: firstRecord.totalKcal,
-    });
 
     // foods 배열 분석
     if (firstRecord.foods && firstRecord.foods.length > 0) {
-      console.log("🔍 첫 번째 record의 foods:");
-      firstRecord.foods.forEach((food, index) => {
-        console.log(`🔍 food[${index}]:`, {
-          name: food.foodName,
-          carbohydrate: food.carbohydrate, // 🔥 Food 레벨
-          protein: food.protein,
-          fat: food.fat,
-          calories: food.calories,
-        });
-      });
+      firstRecord.foods.forEach((food, index) => {});
     }
 
     // 모든 record의 영양소 요약 - 정확한 필드명 사용
-    console.log("🔍 모든 record 영양소 요약:");
+
     monthlyMealRecords.forEach((record, index) => {
       const totalCarbs = record.totalCarbs || 0; // 🔥 Record 레벨
       const totalProtein = record.totalProtein || 0;
@@ -459,28 +413,17 @@ const Nutrition = () => {
           foodsFat += food.fat || 0;
         });
       }
-
-      console.log(
-        `  [${index}] ${record.type}: 직접(C:${totalCarbs}, P:${totalProtein}, F:${totalFat}) foods(C:${foodsCarbs}, P:${foodsProtein}, F:${foodsFat})`
-      );
     });
   };
 
   // 🔍 더 상세한 원본 데이터 분석 함수
   const detailedDebugNutritionData = () => {
-    console.log("🔍 상세한 영양소 원본 데이터 디버깅 시작");
-
     if (monthlyMealRecords.length === 0) {
-      console.log("🚨 monthlyMealRecords가 비어있습니다!");
       return;
     }
 
     // 첫 3개 record 완전 분해 분석
     monthlyMealRecords.slice(0, 3).forEach((record, recordIndex) => {
-      console.log(`🔍 ========== Record [${recordIndex}] 완전 분석 ==========`);
-      console.log("🔍 Record 전체:", record);
-      console.log("🔍 Record 모든 키:", Object.keys(record));
-
       // Record 레벨의 모든 영양소 관련 필드 찾기
       const nutritionFields = {};
       Object.keys(record).forEach((key) => {
@@ -495,17 +438,10 @@ const Nutrition = () => {
           nutritionFields[key] = record[key];
         }
       });
-      console.log("🔍 Record 영양소 관련 필드들:", nutritionFields);
 
       // Foods 배열 상세 분석
       if (record.foods && Array.isArray(record.foods)) {
-        console.log(`🔍 Foods 배열 개수: ${record.foods.length}`);
-
         record.foods.forEach((food, foodIndex) => {
-          console.log(`🔍 ---- Food [${foodIndex}] 분석 ----`);
-          console.log("🔍 Food 전체:", food);
-          console.log("🔍 Food 모든 키:", Object.keys(food));
-
           // Food 레벨의 모든 영양소 관련 필드 찾기
           const foodNutritionFields = {};
           Object.keys(food).forEach((key) => {
@@ -520,12 +456,9 @@ const Nutrition = () => {
               foodNutritionFields[key] = food[key];
             }
           });
-          console.log("🔍 Food 영양소 관련 필드들:", foodNutritionFields);
         });
       } else {
-        console.log("🚨 Foods 배열이 없거나 비어있음");
       }
-      console.log("🔍 ========================================");
     });
 
     // 전체 데이터에서 가능한 모든 키 수집
@@ -542,15 +475,6 @@ const Nutrition = () => {
       }
     });
 
-    console.log(
-      "🔍 전체 Record에서 발견된 모든 키들:",
-      Array.from(allKeys).sort()
-    );
-    console.log(
-      "🔍 전체 Food에서 발견된 모든 키들:",
-      Array.from(allFoodKeys).sort()
-    );
-
     // 탄수화물 관련 키들만 필터링
     const carbKeys = Array.from(allKeys).filter((key) =>
       key.toLowerCase().includes("carb")
@@ -558,9 +482,6 @@ const Nutrition = () => {
     const foodCarbKeys = Array.from(allFoodKeys).filter((key) =>
       key.toLowerCase().includes("carb")
     );
-
-    console.log("🔍 Record에서 발견된 탄수화물 관련 키들:", carbKeys);
-    console.log("🔍 Food에서 발견된 탄수화물 관련 키들:", foodCarbKeys);
   };
 
   // 선택된 월의 통계 데이터 계산
@@ -598,29 +519,17 @@ const Nutrition = () => {
   const getSelectedDetailDateData = () => {
     const selectedDateStr = selectedDetailDate.toISOString().split("T")[0];
 
-    console.log(
-      "🔍 getSelectedDetailDateData - 선택된 상세 날짜:",
-      selectedDateStr
-    );
-
     const selectedDateMeals = monthlyMealRecords.filter((record) => {
       const recordDate = new Date(record.modifiedAt || record.createDate);
       const recordDateStr = recordDate.toISOString().split("T")[0];
       const isSelectedDate = recordDateStr === selectedDateStr;
 
       if (isSelectedDate) {
-        console.log("🔍 선택된 상세 날짜 식사 발견:", {
-          type: record.type,
-          totalKcal: record.totalKcal,
-          calories: record.calories,
-          date: recordDateStr,
-        });
       }
 
       return isSelectedDate;
     });
 
-    console.log("🔍 getSelectedDetailDateData 결과:", selectedDateMeals);
     return selectedDateMeals;
   };
 
@@ -652,7 +561,6 @@ const Nutrition = () => {
       newDate.setDate(newDate.getDate() + 1);
     }
     setSelectedDetailDate(newDate);
-    console.log("🔍 상세 날짜 변경:", newDate.toLocaleDateString("ko-KR"));
   };
 
   // 선택된 상세 날짜의 영양소 데이터 계산 (새로 추가)

@@ -12,6 +12,7 @@ import {
   fetchMonthlyMeals,
   fetchMealsByDateRange,
   fetchMonthlyMealsAlternative,
+  fetchMealsByMemberId,
 } from "../../api/mealApi";
 
 import HaruCalendar from "../../components/haruReport/record/Calendar";
@@ -24,11 +25,18 @@ import ChatBot from "../../components/chatbot/ChatBot";
 function Record() {
   const dispatch = useDispatch();
 
-  // 🔥 안전한 초기 날짜 설정
+  // 🔥 실제 데이터 확인을 위해 현재 날짜 사용
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
-    console.log("🔍 오늘 날짜로 초기화:", today);
+
+    // 🔥 실제 데이터 확인을 위해 현재 날짜 사용 (시스템 시간 그대로)
+
     return today;
+
+    // 이전 강제 설정 로직 (주석 처리)
+    // console.warn("🚨 강제로 2024년 12월로 설정합니다.");
+    // const correctedDate = new Date(2024, 11, 15);
+    // return correctedDate;
   });
   const [selectedDates, setSelectedDates] = useState([]);
 
@@ -40,36 +48,27 @@ function Record() {
     useSelector((state) => state.meal);
   const entireReduxState = useSelector((state) => state.meal); // 전체 상태 확인용
 
-  // 🔍 디버깅용 로그 추가
-  console.log("🔍 Record.jsx - 전체 Redux meal state:", entireReduxState);
-  console.log("🔍 Record.jsx - 월별 데이터:", monthlyMealRecords);
-  console.log(
-    "🔍 Record.jsx - 월별 데이터 개수:",
-    monthlyMealRecords?.length || 0
-  );
-  console.log("🔍 Record.jsx - 월별 로딩 상태:", isMonthlyLoading);
-  console.log("🔍 Record.jsx - 월별 에러:", monthlyError);
-  console.log("🔍 Record.jsx - 현재 월/년:", currentMonth, currentYear);
+  // 🔥 로그인된 사용자 정보 가져오기
+  const { isLoggedIn, user } = useSelector((state) => state.login);
+  const memberId = user?.userid || user?.memberId || 1; // 기본값 1
 
   // 🔥 selectedDate가 유효하지 않으면 오늘 날짜로 복구
   useEffect(() => {
     if (!selectedDate || isNaN(selectedDate.getTime())) {
-      console.warn("🚨 selectedDate가 유효하지 않음, 오늘 날짜로 복구");
       setSelectedDate(new Date());
     }
   }, [selectedDate]);
 
   // 🔥 월별 데이터 로드 로직 (독립적)
   useEffect(() => {
+    // 🔥 로그인하지 않은 경우 API 호출 중단
+    if (!isLoggedIn || !memberId) {
+      return;
+    }
+
     const loadMonthlyData = async () => {
       const targetMonth = selectedDate.getMonth();
       const targetYear = selectedDate.getFullYear();
-
-      console.log(
-        "🔍 Record - 월별 데이터 로드 시작:",
-        targetYear,
-        targetMonth + 1
-      );
 
       // 이미 해당 월 데이터가 있고, Redux 월과 일치하면 스킵
       if (
@@ -77,9 +76,18 @@ function Record() {
         currentYear === targetYear &&
         monthlyMealRecords.length > 0
       ) {
-        console.log("🔍 Record - 이미 해당 월 데이터 존재, 스킵");
         return;
       }
+
+      try {
+        const testData = await fetchMealsByMemberId(memberId);
+
+        if (testData && Array.isArray(testData) && testData.length > 0) {
+          // 날짜 확인
+          const firstMeal = testData[0];
+        } else {
+        }
+      } catch (error) {}
 
       dispatch(setMonthlyLoading(true));
       dispatch(clearMonthlyError());
@@ -89,13 +97,12 @@ function Record() {
         // 🔥 방법 1: 월별 API 시도
         let monthlyData;
         try {
-          monthlyData = await fetchMonthlyMeals(1, targetYear, targetMonth); // memberId=1
+          monthlyData = await fetchMonthlyMeals(
+            memberId,
+            targetYear,
+            targetMonth
+          ); // 실제 memberId 사용
         } catch (monthlyApiError) {
-          console.warn(
-            "🔍 월별 API 실패, 날짜 범위 API 시도:",
-            monthlyApiError
-          );
-
           // 🔥 방법 2: 날짜 범위 API로 대체
           try {
             const startDate = `${targetYear}-${String(targetMonth + 1).padStart(
@@ -106,16 +113,15 @@ function Record() {
               2,
               "0"
             )}-31`;
-            monthlyData = await fetchMealsByDateRange(1, startDate, endDate);
-          } catch (dateRangeError) {
-            console.warn(
-              "🔍 날짜 범위 API도 실패, 대안 방법 시도:",
-              dateRangeError
+            monthlyData = await fetchMealsByDateRange(
+              memberId,
+              startDate,
+              endDate
             );
-
+          } catch (dateRangeError) {
             // 🔥 방법 3: 기존 API 활용 대안 방법
             monthlyData = await fetchMonthlyMealsAlternative(
-              1,
+              memberId,
               targetYear,
               targetMonth
             );
@@ -123,13 +129,12 @@ function Record() {
         }
 
         // 🔥 데이터 가공 (Meal.jsx와 동일한 로직)
+
         const processedData = Array.isArray(monthlyData)
           ? monthlyData
           : monthlyData.data || [];
 
         const transformedData = processedData.map((record) => {
-          console.log("🔍 Record - 월별 데이터 가공:", record);
-
           // mealType → type 변환
           const convertMealType = (mealType) => {
             const typeMap = {
@@ -166,10 +171,8 @@ function Record() {
           };
         });
 
-        console.log("🔍 Record - 가공된 월별 데이터:", transformedData);
         dispatch(setMonthlyMealRecords(transformedData));
       } catch (error) {
-        console.error("🚨 Record - 월별 데이터 로드 실패:", error);
         dispatch(setMonthlyError("월별 식사 기록을 불러오는데 실패했습니다."));
       } finally {
         dispatch(setMonthlyLoading(false));
@@ -177,20 +180,12 @@ function Record() {
     };
 
     loadMonthlyData();
-  }, [selectedDate, dispatch]); // selectedDate 변경 시마다 월별 데이터 로드
+  }, [selectedDate, dispatch, memberId, isLoggedIn]); // selectedDate, memberId, 로그인 상태 변경 시마다 월별 데이터 로드
 
   // 🔍 실제 데이터 내용 확인
   if (monthlyMealRecords && monthlyMealRecords.length > 0) {
-    console.log("🔍 첫 번째 월별 데이터:", monthlyMealRecords[0]);
-    console.log(
-      "🔍 첫 번째 월별 데이터의 모든 키들:",
-      Object.keys(monthlyMealRecords[0])
-    );
-    console.log("🔍 모든 월별 데이터:", monthlyMealRecords);
-
     // 🔍 날짜 관련 필드 찾기
     monthlyMealRecords.forEach((record, index) => {
-      console.log(`🔍 record[${index}] 전체:`, record);
       const possibleDateFields = Object.keys(record).filter(
         (key) =>
           key.toLowerCase().includes("date") ||
@@ -198,47 +193,8 @@ function Record() {
           key.toLowerCase().includes("created") ||
           key.toLowerCase().includes("updated")
       );
-      console.log(`🔍 record[${index}] 날짜 관련 필드들:`, possibleDateFields);
     });
   }
-
-  // 🔍 현재 선택된 날짜들 확인
-  console.log("🔍 selectedDates:", selectedDates);
-  console.log("🔍 selectedDates length:", selectedDates.length);
-
-  // 🧪 테스트용 더미 데이터 추가 함수
-  const addTestData = () => {
-    const testData = [
-      {
-        mealId: 1,
-        type: "아침",
-        createDate: "2025-01-24T09:00:00",
-        modifiedAt: "2025-01-24T09:00:00",
-        imageUrl: "/images/food_1.jpg",
-        totalKcal: 350,
-        foods: [
-          { foodId: 1, foodName: "토스트", kcal: 200 },
-          { foodId: 2, foodName: "우유", kcal: 150 },
-        ],
-      },
-      {
-        mealId: 2,
-        type: "점심",
-        createDate: "2025-01-24T12:30:00",
-        modifiedAt: "2025-01-24T12:30:00",
-        imageUrl: "/images/food_2.jpg",
-        totalKcal: 650,
-        foods: [
-          { foodId: 3, foodName: "김치찌개", kcal: 400 },
-          { foodId: 4, foodName: "밥", kcal: 250 },
-        ],
-      },
-    ];
-
-    // 🔥 monthlyMealRecords에 추가 (기존 데이터와 합치기)
-    dispatch(setMonthlyMealRecords([...monthlyMealRecords, ...testData]));
-    console.log("🧪 테스트 데이터 monthlyMealRecords에 추가됨");
-  };
 
   const [mealCounts, setMealCounts] = useState({
     아침: 0,
@@ -249,13 +205,6 @@ function Record() {
 
   // 날짜 클릭 핸들러
   const handleDateClick = (date) => {
-    console.log(
-      "🔍 handleDateClick 호출됨 - 받은 date:",
-      date,
-      "타입:",
-      typeof date
-    );
-
     // 🔥 입력된 date 유효성 검사
     if (!date) {
       console.error("🚨 날짜가 null 또는 undefined:", date);
@@ -276,19 +225,14 @@ function Record() {
       return;
     }
 
-    console.log("🔍 유효한 날짜로 처리됨:", validDate);
-
     setSelectedDate(validDate);
     setSelectedDates((prev) => {
       const dateStr = validDate.toISOString().split("T")[0];
-      console.log("🔍 날짜 문자열:", dateStr);
 
       const exists = prev.some((d) => {
         if (!d || isNaN(d.getTime())) return false;
         return d.toISOString().split("T")[0] === dateStr;
       });
-
-      console.log("🔍 이미 선택된 날짜인가:", exists);
 
       if (exists) {
         return prev.filter((d) => {
@@ -319,14 +263,8 @@ function Record() {
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
-        console.log("🔍 필터링 대상 날짜:", date.toISOString().split("T")[0]);
-        console.log("🔍 필터링 대상 날짜 전체:", date);
-        console.log("🔍 startOfDay:", startOfDay);
-        console.log("🔍 endOfDay:", endOfDay);
-
         const filtered = monthlyMealRecords.filter((record) => {
           // 🔥 record 전체 구조 확인
-          console.log("🔍 필터링 중인 record:", record);
 
           // 🔥 다양한 날짜 필드명 시도 (modifiedAt 우선)
           const possibleDateField =
@@ -355,36 +293,17 @@ function Record() {
             return false;
           }
 
-          console.log(
-            "🔍 사용된 날짜 필드:",
-            possibleDateField,
-            "→ Date 객체:",
-            recordDate
-          );
-          console.log("🔍 modifiedAt 필드:", record.modifiedAt);
-
           // 날짜만 비교 (시간 제외)
           const recordDateOnly = recordDate.toISOString().split("T")[0];
           const selectedDateOnly = date.toISOString().split("T")[0];
 
-          console.log(
-            "🔍 날짜만 비교 - record:",
-            recordDateOnly,
-            "vs 선택:",
-            selectedDateOnly
-          );
-
           const isInRange = recordDate >= startOfDay && recordDate <= endOfDay;
           const isSameDate = recordDateOnly === selectedDateOnly;
-
-          console.log("🔍 날짜 범위 내 포함:", isInRange);
-          console.log("🔍 날짜 정확 일치:", isSameDate);
 
           // 🔥 더 확실한 방법: 문자열 날짜 비교도 사용
           return isSameDate || isInRange;
         });
 
-        console.log("🔍 이 날짜에 해당하는 record 개수:", filtered.length);
         return filtered;
       })
       .sort((a, b) => {
@@ -394,17 +313,11 @@ function Record() {
         return dateB - dateA;
       });
 
-    console.log("🔍 getSelectedMeals 결과:", result);
-    console.log("🔍 getSelectedMeals 결과 개수:", result.length);
     return result;
   };
 
   // 선택된 월의 식사 타입별 카운트 계산 (Redux 데이터 기반)
   useEffect(() => {
-    console.log("🔍 mealCounts 계산 시작");
-    console.log("🔍 selectedDate:", selectedDate);
-    console.log("🔍 월별 데이터 for counting:", monthlyMealRecords);
-
     const counts = {
       아침: 0,
       점심: 0,
@@ -427,17 +340,8 @@ function Record() {
         }
 
         const recordDate = new Date(recordDateField);
-        console.log(
-          "🔍 record:",
-          record.type,
-          "날짜 필드:",
-          recordDateField,
-          "→",
-          recordDate
-        );
 
         if (isNaN(recordDate.getTime())) {
-          console.error("🚨 유효하지 않은 날짜:", recordDateField);
           return;
         }
 
@@ -446,23 +350,12 @@ function Record() {
         const selectedMonth = selectedDate.getMonth();
         const selectedYear = selectedDate.getFullYear();
 
-        console.log(
-          "🔍 record 월/년:",
-          recordMonth,
-          recordYear,
-          "vs 선택된 월/년:",
-          selectedMonth,
-          selectedYear
-        );
-
         if (recordMonth === selectedMonth && recordYear === selectedYear) {
-          console.log("🔍 월/년 일치! 카운트 증가:", record.type);
           counts[record.type] = (counts[record.type] || 0) + 1;
         }
       });
     }
 
-    console.log("🔍 최종 mealCounts:", counts);
     setMealCounts(counts);
   }, [monthlyMealRecords, selectedDate]);
 
