@@ -1,6 +1,13 @@
 import React from "react";
 
 function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
+  // 🔥 selectedDate 유효성 검사
+  const safeSelectedDate =
+    selectedDate && !isNaN(selectedDate.getTime()) ? selectedDate : new Date();
+
+  console.log("🔍 Calendar - 받은 selectedDate:", selectedDate);
+  console.log("🔍 Calendar - 안전한 selectedDate:", safeSelectedDate);
+
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
   };
@@ -24,13 +31,24 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
     endOfDay.setHours(23, 59, 59, 999);
 
     return mealData.filter((meal) => {
-      const mealDate = new Date(meal.createDate);
+      // 🔥 modifiedAt 우선으로 날짜 필드 가져오기
+      const mealDateField =
+        meal.modifiedAt || meal.createDate || meal.createdDate || meal.date;
+
+      if (!mealDateField) return false;
+
+      const mealDate = new Date(mealDateField);
+
+      if (isNaN(mealDate.getTime())) return false;
+
       return mealDate >= startOfDay && mealDate <= endOfDay;
     });
   };
 
-  const year = selectedDate.getFullYear();
-  const month = selectedDate.getMonth();
+  const year = safeSelectedDate.getFullYear();
+  const month = safeSelectedDate.getMonth();
+
+  console.log("🔍 Calendar - year:", year, "month:", month);
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
   const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
@@ -58,8 +76,8 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
 
     // 현재 달의 날짜들
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dayMeals = getMealDataForDate(date);
+      const currentDate = new Date(year, month, day);
+      const dayMeals = getMealDataForDate(currentDate);
       const isToday =
         today.getDate() === day &&
         today.getMonth() === month &&
@@ -69,7 +87,25 @@ function HaruCalendar({ selectedDate, mealData, onDateClick, onMonthChange }) {
       days.push(
         <div
           key={day}
-          onClick={() => onDateClick(date)}
+          onClick={() => {
+            // 🔥 안전한 Date 객체 생성
+            const clickedDate = new Date(year, month, day);
+            console.log("🔍 Calendar - 클릭된 날짜 생성:", clickedDate);
+            console.log(
+              "🔍 Calendar - 날짜 유효성:",
+              !isNaN(clickedDate.getTime())
+            );
+
+            if (!isNaN(clickedDate.getTime())) {
+              onDateClick(clickedDate);
+            } else {
+              console.error("🚨 Calendar - 유효하지 않은 날짜 생성됨:", {
+                year,
+                month,
+                day,
+              });
+            }
+          }}
           className={`h-[120px] p-2 border border-gray-100 cursor-pointer
             ${isToday ? "bg-purple-50" : "hover:bg-gray-50"}`}
         >
