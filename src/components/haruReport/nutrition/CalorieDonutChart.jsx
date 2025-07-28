@@ -16,7 +16,7 @@ const MEAL_COLORS = {
   간식: "#c4b5fd", // purple-300
 };
 
-const CalorieDonutChart = () => {
+const CalorieDonutChart = ({ data = [] }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -32,15 +32,54 @@ const CalorieDonutChart = () => {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // 임시 데이터 (나중에 API로 대체)
-  const data = [
-    { name: "아침", calories: 500, percentage: 25 },
-    { name: "점심", calories: 700, percentage: 35 },
-    { name: "저녁", calories: 600, percentage: 30 },
-    { name: "간식", calories: 200, percentage: 10 },
-  ];
+  console.log("🔍 CalorieDonutChart 받은 데이터:", data);
 
-  const totalCalories = data.reduce((sum, item) => sum + item.calories, 0);
+  // 식사 타입별 칼로리 계산
+  const processedData = (() => {
+    if (!data || data.length === 0) {
+      return [{ name: "데이터 없음", calories: 0, percentage: 100 }];
+    }
+
+    const mealTypeCalories = {
+      아침: 0,
+      점심: 0,
+      저녁: 0,
+      간식: 0,
+    };
+
+    // 각 식사 타입별 칼로리 합계 계산
+    data.forEach((meal) => {
+      const type = meal.type || "간식";
+      const calories = meal.totalKcal || meal.calories || 0;
+      if (mealTypeCalories.hasOwnProperty(type)) {
+        mealTypeCalories[type] += calories;
+      } else {
+        mealTypeCalories["간식"] += calories;
+      }
+    });
+
+    const totalCalories = Object.values(mealTypeCalories).reduce(
+      (sum, cal) => sum + cal,
+      0
+    );
+
+    if (totalCalories === 0) {
+      return [{ name: "데이터 없음", calories: 0, percentage: 100 }];
+    }
+
+    return Object.entries(mealTypeCalories)
+      .filter(([_, calories]) => calories > 0)
+      .map(([type, calories]) => ({
+        name: type,
+        calories: calories,
+        percentage: Math.round((calories / totalCalories) * 100),
+      }));
+  })();
+
+  const totalCalories = processedData.reduce(
+    (sum, item) => sum + item.calories,
+    0
+  );
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -76,28 +115,23 @@ const CalorieDonutChart = () => {
         x={x}
         y={y}
         fill="black"
-        fontSize={14} // 추가: 폰트 크기
-        fontWeight="semibold" // 추가: 볼드 처리
+        fontSize={14}
+        fontWeight="semibold"
         textAnchor={x > cx ? "start" : "end"}
         dominantBaseline="central"
       >
-        {`${data[index].name} ${(percent * 100).toFixed(0)}%`}
+        {`${processedData[index].name} ${(percent * 100).toFixed(0)}%`}
       </text>
     );
   };
 
   return (
     <div ref={containerRef}>
-      <div className="text-center mb-4">
-        <span className="text-gray-600">총 섭취 칼로리:</span>
-        <span className="ml-2 font-bold text-lg">{totalCalories}kcal</span>
-      </div>
-
       <div className="w-full h-[250px] relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={data}
+              data={processedData}
               cx="50%"
               cy="50%"
               innerRadius="40%"
@@ -108,14 +142,14 @@ const CalorieDonutChart = () => {
               labelLine={false}
               label={renderCustomizedLabel}
             >
-              {data.map((entry) => (
+              {processedData.map((entry) => (
                 <Cell
                   key={`cell-${entry.name}`}
-                  fill={MEAL_COLORS[entry.name]}
+                  fill={MEAL_COLORS[entry.name] || "#d1d5db"}
                 />
               ))}
             </Pie>
-
+            <Tooltip content={<CustomTooltip />} />
             <Legend
               formatter={(value) => (
                 <span style={{ color: "black" }}>{value}</span>

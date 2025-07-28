@@ -1,128 +1,241 @@
-import { useEffect, useMemo, useState } from "react";
+// src/pages/meal/Meal.jsx
+import React, { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setMealRecords } from "../../slices/mealSlice";
-import { useNavigate } from "react-router-dom";
-import MealPickerModal from "../../components/meal/MealPickerModal";
+import {
+  setSelectedDate,
+  setMealRecords,
+  setNutritionTotals,
+  setLoading,
+  setError,
+  clearError,
+} from "../../slices/mealSlice";
 import axios from "axios";
-import MealCalendarModal from "../../components/meal/MealCalendarModal";
-
-const calorieGoal = 1694;
+import MealPickerModal from "../../components/meal/MealPickerModal";
+import MealCard from "../../components/haruReport/record/MealCard";
+import SubLayout from "../../layout/SubLayout";
 
 function Meal() {
-  const mealRecords = useSelector((state) => state.meal.mealRecords);
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    // yyyy-mm-dd 형식으로 변환
-    return today.toISOString().slice(0, 10);
-  }); // 기본 날짜를 오늘로 설정
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleCardClick = (record) => {
-    navigate(`/result/${record.id}`);
-  };
+  // ✅ Redux에서 상태 가져오기
+  const {
+    selectedDate,
+    mealRecords,
+    totalKcal,
+    totalCarbs,
+    totalProtein,
+    totalFat,
+    isLoading,
+    error,
+  } = useSelector((state) => state.meal);
+
+  const [isMealPickerOpen, setIsMealPickerOpen] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState("");
+
+  // 목표 칼로리 (임시로 2000으로 설정)
+  const calorieGoal = 2000;
+
+  console.log("🔍 Meal.jsx - Redux selectedDate:", selectedDate);
+  console.log("🔍 Meal.jsx - Redux mealRecords:", mealRecords);
+  console.log("🔍 Meal.jsx - Redux 영양소:", {
+    totalKcal,
+    totalCarbs,
+    totalProtein,
+    totalFat,
+  });
 
   // 날짜 변경 함수
-  const changeDate = (diff) => {
-    const date = new Date(selectedDate);
-    date.setDate(date.getDate() + diff);
-    const newDate = date.toISOString().slice(0, 10);
-    setSelectedDate(newDate);
+  const changeDate = (days) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + days);
+    const newDateString = newDate.toISOString().slice(0, 10);
+    dispatch(setSelectedDate(newDateString));
+    console.log("🔍 날짜 변경:", newDateString);
   };
 
-  useEffect(() => {
-    const loadMeals = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:8080/api/meals/modified-date/member/1?date=${selectedDate}`
-        );
-        // 배열이 아니면 빈 배열로 처리
-        const records = Array.isArray(res.data)
-          ? res.data
-          : res.data.data || [];
+  // 카드 클릭 핸들러
+  const handleCardClick = (record) => {
+    console.log("카드 클릭:", record);
+    // 필요시 상세 보기 모달 등을 열 수 있습니다
+  };
 
-        let kcal = 0,
-          carbs = 0,
-          protein = 0,
-          fat = 0;
+  // 식사 기록 불러오기 함수
+  const loadMeals = useCallback(async () => {
+    const memberId = 1; // 임시로 하드코딩
 
-        const updatedRecords = records.map((record) => {
+    dispatch(setLoading(true));
+    dispatch(clearError());
+    console.log("🔍 식사 기록 로드 시작 - 날짜:", selectedDate);
+
+    try {
+      const response = await axios.get(
+        `/api/meals/modified-date/member/${memberId}?date=${selectedDate}`
+      );
+
+      console.log("🔍 API 응답:", response.data);
+
+      if (response.data) {
+        // 데이터 가공
+        const processedData = Array.isArray(response.data)
+          ? response.data
+          : response.data.data || [];
+
+        const transformedData = processedData.map((record) => {
+          console.log("🔍 개별 record 가공:", record);
+
+          // mealType → type 변환
+          const convertMealType = (mealType) => {
+            const typeMap = {
+              BREAKFAST: "아침",
+              LUNCH: "점심",
+              DINNER: "저녁",
+              SNACK: "간식",
+            };
+            return typeMap[mealType] || mealType;
+          };
+
+          // 영양소 계산
           let recordCalories = 0;
           let recordCarbs = 0;
           let recordProtein = 0;
           let recordFat = 0;
 
-          record.foods.forEach((food) => {
-            recordCalories += food.calories || 0;
-            recordCarbs += food.carbohydrate || 0;
-            recordProtein += food.protein || 0;
-            recordFat += food.fat || 0;
-          });
+          if (record.foods && Array.isArray(record.foods)) {
+            record.foods.forEach((food) => {
+              recordCalories += food.calories || 0;
+              recordCarbs += food.carbs || 0;
+              recordProtein += food.protein || 0;
+              recordFat += food.fat || 0;
+            });
+          }
 
-          kcal += recordCalories;
-          carbs += recordCarbs;
-          protein += recordProtein;
-          fat += recordFat;
+          // 🔥 modifiedAt 우선으로 날짜 필드 설정
+          const dateField =
+            record.modifiedAt ||
+            record.createDate ||
+            record.createdDate ||
+            record.date;
 
           return {
             ...record,
+            type: convertMealType(record.mealType),
+            createDate: dateField,
+            modifiedAt: record.modifiedAt,
+            totalKcal: recordCalories,
             calories: recordCalories,
-            carbohydrate: recordCarbs,
-            protein: recordProtein,
-            fat: recordFat,
           };
         });
 
-        dispatch(setMealRecords(updatedRecords));
-      } catch (err) {
-        console.error("식사 기록 불러오기 실패", err);
-      }
-    };
+        console.log("🔍 가공된 데이터:", transformedData);
 
-    loadMeals();
+        // Redux에 저장
+        dispatch(setMealRecords(transformedData));
+
+        // 전체 영양소 계산
+        const totalCalories = transformedData.reduce(
+          (sum, record) => sum + (record.totalKcal || 0),
+          0
+        );
+        const totalCarbsSum = transformedData.reduce((sum, record) => {
+          return (
+            sum +
+            (record.foods
+              ? record.foods.reduce(
+                  (foodSum, food) => foodSum + (food.carbs || 0),
+                  0
+                )
+              : 0)
+          );
+        }, 0);
+        const totalProteinSum = transformedData.reduce((sum, record) => {
+          return (
+            sum +
+            (record.foods
+              ? record.foods.reduce(
+                  (foodSum, food) => foodSum + (food.protein || 0),
+                  0
+                )
+              : 0)
+          );
+        }, 0);
+        const totalFatSum = transformedData.reduce((sum, record) => {
+          return (
+            sum +
+            (record.foods
+              ? record.foods.reduce(
+                  (foodSum, food) => foodSum + (food.fat || 0),
+                  0
+                )
+              : 0)
+          );
+        }, 0);
+
+        dispatch(
+          setNutritionTotals({
+            totalKcal: totalCalories,
+            totalCarbs: totalCarbsSum,
+            totalProtein: totalProteinSum,
+            totalFat: totalFatSum,
+          })
+        );
+
+        console.log("🔍 계산된 전체 영양소:", {
+          totalKcal: totalCalories,
+          totalCarbs: totalCarbsSum,
+          totalProtein: totalProteinSum,
+          totalFat: totalFatSum,
+        });
+      }
+    } catch (err) {
+      console.error("🚨 식사 기록 불러오기 실패:", err);
+      dispatch(setError("식사 기록을 불러오는데 실패했습니다."));
+    } finally {
+      dispatch(setLoading(false));
+    }
   }, [selectedDate, dispatch]);
 
-  // mealRecords의 합계 계산을 useMemo로 관리
-  const totalKcal = useMemo(
-    () => mealRecords.reduce((sum, r) => sum + (r.calories || 0), 0),
-    [mealRecords]
-  );
-  const totalCarbs = useMemo(
-    () => mealRecords.reduce((sum, r) => sum + (r.carbohydrate || 0), 0),
-    [mealRecords]
-  );
-  const totalProtein = useMemo(
-    () => mealRecords.reduce((sum, r) => sum + (r.protein || 0), 0),
-    [mealRecords]
-  );
-  const totalFat = useMemo(
-    () => mealRecords.reduce((sum, r) => sum + (r.fat || 0), 0),
-    [mealRecords]
-  );
+  // selectedDate 변경시 식사 기록 로드
+  useEffect(() => {
+    loadMeals();
+  }, [loadMeals]);
+
+  const handleMealTypeClick = (mealType) => {
+    setSelectedMealType(mealType);
+    setIsMealPickerOpen(true);
+  };
+
+  // 식사 타입별 데이터 가져오기
+  const getMealsByType = (type) => {
+    return mealRecords.filter((meal) => meal.type === type);
+  };
 
   return (
     <>
       <div className="p-4 sm:p-6 container mx-auto space-y-8 sm:w-[1020px]">
         <div className="flex gap-4 items-center justify-center">
-          <button
-            onClick={() => changeDate(-1)}
-            className="text-center text-lg sm:text-2xl font-bold"
-          >
-            〈
-          </button>
           <div
             className="text-center text-lg sm:text-2xl font-bold cursor-pointer"
-            onClick={() => setCalendarOpen(true)}
+            onClick={() => changeDate(-1)}
           >
-            {selectedDate}
+            〈
           </div>
-          <button
+          <div className="text-center text-lg sm:text-2xl font-bold">
+            {new Date(selectedDate)
+              .toLocaleDateString("ko-KR", {
+                year: "2-digit",
+                month: "2-digit",
+                day: "2-digit",
+                weekday: "short",
+              })
+              .replace(/\./g, "-")
+              .replace(/\s/g, " ")}
+          </div>
+          <div
+            className="text-center text-lg sm:text-2xl font-bold cursor-pointer"
             onClick={() => changeDate(1)}
-            className="text-center text-lg sm:text-2xl font-bold"
           >
             〉
-          </button>
+          </div>
         </div>
 
         <div className="card bg-base-100 shadow-lg p-4 px-0 sm:px-40">
@@ -195,73 +308,83 @@ function Meal() {
         </div>
 
         {/* 식사 기록 */}
-        <h2 className="m-0 pb-3 text-lg sm:text-xl font-semibold">식사기록</h2>
-        {mealRecords.length === 0 ? (
-          <div className="text-center text-gray-400 py-10 text-base sm:text-lg">
-            입력된 기록이 없습니다.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {mealRecords.map((record) => (
-              <div key={record.id} onClick={() => handleCardClick(record)}>
-                <div
-                  className="card justify-between bg-base-100 w-full rounded-xl shadow-lg p-[20px] transition duration-200 cursor-pointer hover:shadow-[0_0_24px_4px_rgba(156,163,175,0.4)] hover:border-2 hover:border-gray hover:scale-105"
-                  style={{ border: "2px solid transparent" }}
-                >
-                  <figure className="mt-4">
-                    <img
-                      className="rounded-xl h-[180px] w-full object-cover"
-                      src={record.imageUrl}
-                      alt="음식 사진"
-                    />
-                  </figure>
-                  <div className="card-body p-0">
-                    <h2 className="card-title flex mt-2">
-                      <span className="text-sm text-gray-500">
-                        {record.mealType === "BREAKFAST"
-                          ? "아침"
-                          : record.mealType === "LUNCH"
-                          ? "점심"
-                          : record.mealType === "DINNER"
-                          ? "저녁"
-                          : record.mealType === "SNACK"
-                          ? "간식"
-                          : record.mealType}
+        <h2 className="m-0 text-lg sm:text-xl font-semibold">식사기록</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {mealRecords.map((record) => (
+            <div
+              key={record.mealId || record.id}
+              onClick={() => handleCardClick(record)}
+            >
+              <div className="card justify-between bg-base-100 w-full rounded-xl shadow-lg p-[20px]">
+                <figure className="mt-4">
+                  <img
+                    className="rounded-xl h-[180px] w-full object-cover"
+                    src={
+                      record.imageUrl || record.image || "/images/food_1.jpg"
+                    }
+                    alt="음식 사진"
+                  />
+                </figure>
+                <div className="card-body p-0">
+                  <h2 className="card-title flex mt-2">
+                    <span className="text-sm text-gray-500">
+                      {record.type || record.mealType}
+                    </span>
+                    <span className="text-purple-500">
+                      {record.totalKcal || record.kcal || record.calories}kcal
+                    </span>
+                  </h2>
+                  <div className="text-[16px] font-semibold flex gap-4">
+                    <p>
+                      탄{" "}
+                      <span className="text-green">
+                        {record.totalCarbs ||
+                          record.carbs ||
+                          (record.foods
+                            ? record.foods.reduce(
+                                (sum, food) => sum + (food.carbs || 0),
+                                0
+                              )
+                            : 0)}
                       </span>
-                      <span className="text-purple-500">
-                        {record.calories}kcal
+                      g
+                    </p>
+                    <p>
+                      단{" "}
+                      <span className="text-yellow">
+                        {record.totalProtein ||
+                          record.protein ||
+                          (record.foods
+                            ? record.foods.reduce(
+                                (sum, food) => sum + (food.protein || 0),
+                                0
+                              )
+                            : 0)}
                       </span>
-                    </h2>
-                    <div className="text-[16px] font-semibold flex gap-4">
-                      <p>
-                        탄{" "}
-                        <span className="text-green">
-                          {record.carbohydrate}
-                        </span>
-                        g
-                      </p>
-                      <p>
-                        단 <span className="text-yellow">{record.protein}</span>
-                        g
-                      </p>
-                      <p>
-                        지 <span className="text-red">{record.fat}</span>g
-                      </p>
-                    </div>
+                      g
+                    </p>
+                    <p>
+                      지{" "}
+                      <span className="text-red">
+                        {record.totalFat ||
+                          record.fat ||
+                          (record.foods
+                            ? record.foods.reduce(
+                                (sum, food) => sum + (food.fat || 0),
+                                0
+                              )
+                            : 0)}
+                      </span>
+                      g
+                    </p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
       <MealPickerModal />
-      <MealCalendarModal
-        open={calendarOpen}
-        onClose={() => setCalendarOpen(false)}
-        onSelectDate={setSelectedDate}
-        memberId={1}
-      />
     </>
   );
 }

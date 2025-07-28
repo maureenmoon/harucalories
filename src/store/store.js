@@ -12,6 +12,7 @@ const store = configureStore({
   devTools: process.env.NODE_ENV !== "production",
 });
 
-console.log("Configured store with reducers:", store.getState());
+console.log("🔍 Redux store 초기 상태:", store.getState());
+console.log("🔍 meal slice 초기 상태:", store.getState().meal);
 
 export default store;

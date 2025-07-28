@@ -10,7 +10,7 @@ const MealCalendarModal = ({ open, onClose, onSelectDate, memberId }) => {
   useEffect(() => {
     if (!open) return;
     axios
-      .get(`http://localhost:8080/api/meals/recorded-dates/member/${memberId}`)
+      .get(`/api/meals/recorded-dates/member/${memberId}`)
       .then((res) => {
         setRecordedDates(res.data);
       })
