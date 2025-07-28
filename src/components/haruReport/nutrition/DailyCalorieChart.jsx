@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const DailyCalorieChart = () => {
+const DailyCalorieChart = ({ data = [], period = "week" }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [showTooltip, setShowTooltip] = useState(window.innerWidth > 768);
@@ -29,16 +29,16 @@ const DailyCalorieChart = () => {
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
-  // 임시 데이터 (나중에 API로 대체)
-  const data = [
-    { date: "6/1", calories: 2200 },
-    { date: "6/2", calories: 1800 },
-    { date: "6/3", calories: 2100 },
-    { date: "6/4", calories: 1950 },
-    { date: "6/5", calories: 2300 },
-    { date: "6/6", calories: 1750 },
-    { date: "6/7", calories: 2000 },
-  ];
+  console.log("🔍 DailyCalorieChart 받은 데이터:", data);
+
+  // 실제 데이터가 없으면 기본 데이터 사용
+  const chartData =
+    data.length > 0
+      ? data.map((item) => ({
+          date: item.formattedDate || item.date,
+          calories: item.calories,
+        }))
+      : [{ date: "데이터 없음", calories: 0 }];
 
   const targetCalories = 2200; // 목표 칼로리 (나중에 사용자 설정값으로 대체)
 
@@ -74,22 +74,30 @@ const DailyCalorieChart = () => {
 
   return (
     <div ref={containerRef} className="w-full">
-      <div className="mb-2 p-2 flex justify-end">
-        <span className="text-gray-600">권장 칼로리:</span>
-        <span className="ml-2 font-bold">{targetCalories}kcal</span>
+      <div className="mb-2 p-2 flex justify-between">
+        <span className="text-sm text-gray-600">이번달 칼로리 섭취량</span>
+        <div>
+          <span className="text-gray-600">권장 칼로리:</span>
+          <span className="ml-2 font-bold">{targetCalories}kcal</span>
+        </div>
       </div>
 
       <div className="w-full h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis
-              domain={[0, 2500]}
-              ticks={[0, 500, 1000, 1500, 2000, 2500]}
+              domain={[
+                0,
+                Math.max(
+                  2500,
+                  Math.max(...chartData.map((d) => d.calories)) + 500
+                ),
+              ]}
             />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             <Legend
@@ -115,36 +123,38 @@ const DailyCalorieChart = () => {
       </div>
 
       {/* 일별 칼로리 섭취 리스트 */}
-      <div className="mt-3 px-2 sm:px-4">
-        <h3 className="text-base sm:text-lg font-semibold mb-3">
-          일별 칼로리 섭취 현황
-        </h3>
-        <div className="grid gap-2">
-          {data.map((item, index) => {
-            const status = getStatusStyle(item.calories);
-            return (
-              <div
-                key={index}
-                className={`p-2 sm:p-2 w-full sm:w-[400px] rounded-lg ${status.bgColor} flex justify-between items-center`}
-              >
-                <div className="flex items-center gap-2 sm:gap-4">
-                  <span className="font-medium text-sm sm:text-sm">
-                    {item.date}
-                  </span>
-                  <span className="text-sm sm:text-sm">
-                    {item.calories}kcal
+      {data.length > 0 && (
+        <div className="mt-3 px-2 sm:px-4">
+          <h3 className="text-base sm:text-lg font-semibold mb-3">
+            일별 칼로리 섭취 현황
+          </h3>
+          <div className="grid gap-2 max-h-90 overflow-y-auto">
+            {data.map((item, index) => {
+              const status = getStatusStyle(item.calories);
+              return (
+                <div
+                  key={index}
+                  className={`p-2 sm:p-2 w-full sm:w-[370px] rounded-lg ${status.bgColor} flex justify-between items-center`}
+                >
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <span className="font-medium text-sm sm:text-sm">
+                      {item.formattedDate || item.date}
+                    </span>
+                    <span className="text-sm sm:text-sm">
+                      {item.calories}kcal
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded text-xs sm:text-sm ${status.color}`}
+                  >
+                    {status.text}
                   </span>
                 </div>
-                <span
-                  className={`px-2 py-1 rounded text-xs sm:text-sm ${status.color}`}
-                >
-                  {status.text}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

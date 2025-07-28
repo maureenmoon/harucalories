@@ -13,26 +13,106 @@ import {
   Radar,
 } from "recharts";
 
-const NutritionBalanceChart = ({ period }) => {
-  // 임시 데이터 (나중에 API로 대체)
-  const data = [
-    { nutrient: "탄수화물", amount: 54.0, unit: "g", percentage: 80 },
-    { nutrient: "단백질", amount: 16.0, unit: "g", percentage: 50 },
-    { nutrient: "지방", amount: 10.0, unit: "g", percentage: 40 },
-    { nutrient: "나트륨", amount: 689.0, unit: "mg", percentage: 30 },
-    { nutrient: "콜레스테롤", amount: 74.0, unit: "mg", percentage: 47 },
-  ];
+const NutritionBalanceChart = ({ period, data = {} }) => {
+  // 일별 권장 섭취량
+  const dailyRecommended = {
+    carbs: 300, // g
+    protein: 60, // g
+    fat: 70, // g
+  };
 
-  const radarData = data.map((item) => ({
+  // 실제 데이터 처리
+  const processedData = (() => {
+    if (!data || Object.keys(data).length === 0) {
+      return [
+        {
+          nutrient: "탄수화물",
+          amount: 0,
+          unit: "g",
+          percentage: 0,
+          displayText: "0g (0%)",
+        },
+        {
+          nutrient: "단백질",
+          amount: 0,
+          unit: "g",
+          percentage: 0,
+          displayText: "0g (0%)",
+        },
+        {
+          nutrient: "지방",
+          amount: 0,
+          unit: "g",
+          percentage: 0,
+          displayText: "0g (0%)",
+        },
+      ];
+    }
+
+    const carbs = data.carbs || 0;
+    const protein = data.protein || 0;
+    const fat = data.fat || 0;
+
+    // 퍼센트 계산 (일일 권장량 기준)
+    const carbsPercentage = Math.round((carbs / dailyRecommended.carbs) * 100);
+    const proteinPercentage = Math.round(
+      (protein / dailyRecommended.protein) * 100
+    );
+    const fatPercentage = Math.round((fat / dailyRecommended.fat) * 100);
+
+    // 표시용 퍼센트 (200% 초과시 "200%+"로 표시)
+    const getDisplayPercentage = (percentage) => {
+      return percentage > 200 ? "200%+" : `${percentage}%`;
+    };
+
+    // 차트용 퍼센트 (최대 200%로 제한)
+    const getChartPercentage = (percentage) => {
+      return Math.min(percentage, 200);
+    };
+
+    const result = [
+      {
+        nutrient: "탄수화물",
+        amount: carbs.toFixed(1),
+        unit: "g",
+        percentage: getChartPercentage(carbsPercentage),
+        displayText: `${carbs.toFixed(1)}g (${getDisplayPercentage(
+          carbsPercentage
+        )})`,
+      },
+      {
+        nutrient: "단백질",
+        amount: protein.toFixed(1),
+        unit: "g",
+        percentage: getChartPercentage(proteinPercentage),
+        displayText: `${protein.toFixed(1)}g (${getDisplayPercentage(
+          proteinPercentage
+        )})`,
+      },
+      {
+        nutrient: "지방",
+        amount: fat.toFixed(1),
+        unit: "g",
+        percentage: getChartPercentage(fatPercentage),
+        displayText: `${fat.toFixed(1)}g (${getDisplayPercentage(
+          fatPercentage
+        )})`,
+      },
+    ];
+
+    return result;
+  })();
+
+  const radarData = processedData.map((item) => ({
     subject: item.nutrient,
-    value: Math.min(item.percentage, 100), // 100%를 넘어가는 경우 100%로 제한
+    value: item.percentage,
     fullMark: 100,
   }));
 
   return (
     <div className="w-full">
       {/* 레이더 차트 */}
-      <div className="h-[250px] ">
+      <div className="h-[250px]">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
             <PolarGrid />
@@ -52,8 +132,8 @@ const NutritionBalanceChart = ({ period }) => {
       <div className="h-[300px] mb-6">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
-            margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+            data={processedData}
+            margin={{ top: 10, right: 50, left: 20, bottom: 8 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -65,18 +145,9 @@ const NutritionBalanceChart = ({ period }) => {
               axisLine={false}
               tickLine={false}
               domain={[0, 100]}
-              ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+              ticks={[0, 25, 50, 75, 100]}
             />
-            <Bar
-              dataKey="percentage"
-              fill="#8884d8"
-              label={{
-                position: "top",
-                formatter: (value) => `${value}%`,
-                fill: "#666",
-                fontSize: 12,
-              }}
-            />
+            <Bar dataKey="percentage" fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -86,10 +157,10 @@ const NutritionBalanceChart = ({ period }) => {
         <table className="w-full text-center">
           <thead className="bg-gray-100">
             <tr>
-              {data.map((item, index) => (
+              {processedData.map((item, index) => (
                 <th
                   key={index}
-                  className="py-4 px-4 text-gray-600 font-normal text-sm"
+                  className="py-2 px-2 text-gray-600 font-normal text-sm"
                 >
                   {item.nutrient}({item.unit})
                 </th>
@@ -98,9 +169,12 @@ const NutritionBalanceChart = ({ period }) => {
           </thead>
           <tbody>
             <tr>
-              {data.map((item, index) => (
-                <td key={index} className="py-3 px-4 text-gray-800">
-                  {item.amount}
+              {processedData.map((item, index) => (
+                <td key={index} className="py-2 px-4 text-gray-800">
+                  <div className="font-semibold">{item.amount}</div>
+                  {/* <div className="text-xs text-gray-500">
+                    {item.displayText.split(" ")[1]}
+                  </div> */}
                 </td>
               ))}
             </tr>
