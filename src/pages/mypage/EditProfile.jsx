@@ -12,7 +12,7 @@ import {
   updateMemberWithImage,
 } from "../../api/authIssueUserApi/memberApi";
 import { getUserData } from "../../utils/cookieUtils";
-import { uploadProfileImage } from "../../utils/imageUpload/uploadImageToSupabase";
+import { uploadProfileImageWithCleanup } from "../../utils/imageUpload/uploadImageToSupabase";
 
 export default function EditProfile() {
   // const user = useSelector((state) => state.login.user);
@@ -58,8 +58,16 @@ export default function EditProfile() {
       setIsLoading(true);
       console.log("🖼️ Starting profile image upload...");
 
-      // Upload optimized profile image to Supabase
-      const uploadResult = await uploadProfileImage(file);
+      // Get current image URL for cleanup
+      const currentImageUrl =
+        form.photo || currentUser.photo || currentUser.profileImageUrl;
+      console.log("🖼️ Current image URL for cleanup:", currentImageUrl);
+
+      // Upload optimized profile image to Supabase with cleanup
+      const uploadResult = await uploadProfileImageWithCleanup(
+        file,
+        currentImageUrl
+      );
       console.log("✅ Profile image upload result:", uploadResult);
 
       // Get current user ID from cookies

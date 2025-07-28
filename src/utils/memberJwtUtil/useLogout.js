@@ -11,6 +11,7 @@ import {
   getTodayCalories,
   getTodayNutrients,
   getMealData,
+  debugAllCookies,
 } from "../../utils/cookieUtils";
 
 const useLogout = () => {
@@ -19,7 +20,9 @@ const useLogout = () => {
 
   const doLogout = async () => {
     console.log("🔓 Logging out...");
-    console.log("🔍 Before logout - cookies:", {
+    console.log("🔍 Before logout - all cookies:");
+    debugAllCookies();
+    console.log("🔍 Before logout - specific cookies:", {
       accessToken: getAccessToken() ? "exists" : "none",
       refreshToken: getRefreshToken() ? "exists" : "none",
       user: getUserData() ? "exists" : "none",
@@ -69,7 +72,9 @@ const useLogout = () => {
       console.log("🧹 Clearing Redux state...");
       dispatch(logout());
 
-      console.log("🔍 After logout - cookies:", {
+      console.log("🔍 After logout - all cookies:");
+      debugAllCookies();
+      console.log("🔍 After logout - specific cookies:", {
         accessToken: getAccessToken() ? "exists" : "none",
         refreshToken: getRefreshToken() ? "exists" : "none",
         user: getUserData() ? "exists" : "none",

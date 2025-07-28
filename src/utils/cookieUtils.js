@@ -254,3 +254,19 @@ export const getUserDashboardData = () => {
     },
   };
 };
+
+// Debug function to check all cookies
+export const debugAllCookies = () => {
+  const allCookies = document.cookie.split(";");
+  const cookieMap = {};
+
+  allCookies.forEach((cookie) => {
+    const [name, value] = cookie.trim().split("=");
+    if (name && value) {
+      cookieMap[name] = value;
+    }
+  });
+
+  console.log("🍪 All current cookies:", cookieMap);
+  return cookieMap;
+};
