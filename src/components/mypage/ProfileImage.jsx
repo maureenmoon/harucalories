@@ -1,5 +1,8 @@
 import React, { useState, useRef } from "react";
-import { getThumbnailUrl } from "../../utils/imageUpload/uploadImageToSupabase";
+import {
+  getImageUrlFromFilename,
+  getThumbnailUrlFromFilename,
+} from "../../utils/imageUpload/uploadImageToSupabase";
 
 export default function ProfileImage({
   photo,
@@ -8,25 +11,96 @@ export default function ProfileImage({
   onImageChange,
   readOnly = false,
   size = "medium",
-  useThumbnail = true, // New prop to control thumbnail usage
+  useThumbnail = true,
 }) {
   const getInitial = (name) => name?.charAt(0).toUpperCase();
   const fileInputRef = useRef(null);
 
-  // Handle both prop names for backward compatibility
-  const imageUrl = photo || currentImage;
-
-  // Try to get thumbnail URL if useThumbnail is enabled
+  // Simple approach: photo is always a filename, generate URLs from it
+  // TEMPORARY FIX: Use direct URL construction instead of the functions
+  const baseUrl = "https://admehgvqowpibiuwugpv.supabase.co";
+  const imageUrl = photo
+    ? `${baseUrl}/storage/v1/object/public/harukcal/member/${photo}`
+    : null;
   const thumbnailUrl =
-    useThumbnail && imageUrl ? getThumbnailUrl(imageUrl) : null;
+    photo && useThumbnail
+      ? `${baseUrl}/storage/v1/object/public/harukcal/member/thumbnails/${photo.replace(
+          /\.(jpg|jpeg|png)$/i,
+          "_thumb.$1"
+        )}`
+      : null;
   const displayUrl = thumbnailUrl || imageUrl;
 
-  // Debug: Log image URL
-  console.log("ProfileImage - Image URL:", imageUrl);
-  console.log("ProfileImage - Thumbnail URL:", thumbnailUrl);
-  console.log("ProfileImage - Display URL:", displayUrl);
-  console.log("ProfileImage - Photo prop:", photo);
-  console.log("ProfileImage - CurrentImage prop:", currentImage);
+  // Add this debug logging
+  console.log("🔧 DEBUG: ProfileImage - photo value:", photo);
+  console.log("🔧 DEBUG: ProfileImage - imageUrl result:", imageUrl);
+  console.log("🔧 DEBUG: ProfileImage - thumbnailUrl result:", thumbnailUrl);
+  console.log("🔧 DEBUG: ProfileImage - displayUrl result:", displayUrl);
+
+  // console.log(
+  //   "🔧 DEBUG: VITE_SUPABASE_URL:",
+  //   import.meta.env.VITE_SUPABASE_URL
+  // );
+  // console.log("🔧 DEBUG: SUPABASE_BUCKET_NAME:", "harukcal");
+
+  // Test manual URL construction with correct URL
+  if (photo) {
+    const correctBaseUrl = "https://admehgvqowpibiuwugpv.supabase.co";
+    const manualUrl = `${correctBaseUrl}/storage/v1/object/public/harukcal/member/${photo}`;
+    const manualThumbUrl = `${correctBaseUrl}/storage/v1/object/public/harukcal/member/thumbnails/${photo.replace(
+      /\.(jpg|jpeg|png)$/i,
+      "_thumb.$1"
+    )}`;
+
+    console.log("🔧 DEBUG: Manual URL with correct base:", manualUrl);
+    console.log("🔧 DEBUG: Manual thumbnail URL:", manualThumbUrl);
+
+    // Test if this URL works
+    fetch(manualUrl, { method: "HEAD" })
+      .then((response) => {
+        console.log("🔧 DEBUG: Manual URL test - Status:", response.status);
+      })
+      .catch((error) => {
+        console.log("🔧 DEBUG: Manual URL test - Error:", error);
+      });
+  }
+
+  // Test manual URL construction
+  if (photo) {
+    const baseUrl =
+      import.meta.env.VITE_SUPABASE_URL ||
+      "https://admehgvqowpibiuwugpv.supabase.co";
+    const manualUrl = `${baseUrl}/storage/v1/object/public/harukcal/member/${photo}`;
+    console.log("🔧 DEBUG: Manual URL construction:", manualUrl);
+  }
+
+  // Test the functions directly
+  if (photo) {
+    const testImage = getImageUrlFromFilename(photo);
+    const testThumb = getThumbnailUrlFromFilename(photo);
+    console.log("🔧 DEBUG: Direct function test - imageUrl:", testImage);
+    console.log("🔧 DEBUG: Direct function test - thumbnailUrl:", testThumb);
+  }
+
+  // Test if the image URL is accessible
+  if (displayUrl) {
+    fetch(displayUrl, { method: "HEAD" })
+      .then((response) => {
+        console.log(
+          "🔍 Image URL accessibility test:",
+          displayUrl,
+          "Status:",
+          response.status
+        );
+      })
+      .catch((error) => {
+        console.error(
+          "❌ Image URL accessibility test failed:",
+          displayUrl,
+          error
+        );
+      });
+  }
 
   // Size classes
   const sizeClasses = {
@@ -92,7 +166,7 @@ export default function ProfileImage({
             }`}
             onError={handleImageError}
             onLoad={handleImageLoad}
-            loading="lazy" // Enable lazy loading
+            loading="lazy"
           />
         ) : (
           <div

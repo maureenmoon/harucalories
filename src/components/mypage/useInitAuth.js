@@ -15,44 +15,32 @@ export default function useInitAuth() {
 
   useEffect(() => {
     const initAuth = async () => {
-      // Check if we have tokens (cookie-based)
-      const accessToken = getAccessToken();
-      const refreshToken = getRefreshToken();
+      // Add a small delay to ensure cookies are set after login
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check if we have user data in our frontend cookie
       const user = getUserData();
 
-      console.log("🔍 Auth init - checking cookies:", {
-        accessToken: accessToken ? "exists" : "none",
-        refreshToken: refreshToken ? "exists" : "none",
+      console.log("🔍 Auth init - checking frontend user data:", {
         user: user ? "exists" : "none",
       });
 
-      // Log the actual token values for debugging (first 20 chars)
-      if (accessToken) {
-        console.log(
-          "🔍 Access token starts with:",
-          accessToken.substring(0, 20) + "..."
-        );
-      }
-      if (refreshToken) {
-        console.log(
-          "🔍 Refresh token starts with:",
-          refreshToken.substring(0, 20) + "..."
-        );
-      }
       if (user) {
-        console.log("🔍 User data:", user.nickname);
+        console.log("🔍 User data found:", user.nickname);
       }
 
-      if (!accessToken || !refreshToken) {
-        console.log("🔍 No tokens found, user not authenticated");
-        dispatch(logout());
+      // If we have valid user data, we can proceed
+      if (user && user.email && user.nickname) {
+        console.log("🔍 Valid user data found, user:", user.nickname);
+        // User data exists and is valid, we can proceed without fetching
         return;
       }
 
-      console.log("🔍 Tokens found, checking authentication...");
+      console.log("🔍 No valid user data found, checking authentication...");
 
       try {
-        // Check if user is authenticated
+        // Check if user is authenticated by calling the backend
+        // The backend will check the HttpOnly cookies automatically
         const userData = await fetchCurrentMember();
 
         // Validate that we got a proper user response
@@ -62,14 +50,27 @@ export default function useInitAuth() {
         }
 
         console.log("✅ Authentication successful, user:", userData.nickname);
+
+        // Always dispatch login to ensure Redux state is updated
+        // This will also update the userData cookie with fresh data
         dispatch(login(userData));
       } catch (err) {
         console.error("❌ Auth init failed:", err);
-        console.log("🧹 Clearing invalid cookies...");
-        // Clear any stale cookies
-        removeAllAppCookies();
-        removeUserData();
-        dispatch(logout());
+
+        // Only clear cookies if it's an authentication error (401, 403)
+        // Don't clear cookies for network errors or server errors
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          console.log("🧹 Authentication failed, clearing cookies...");
+          removeAllAppCookies();
+          removeUserData();
+          dispatch(logout());
+        } else {
+          console.log(
+            "⚠️ Network or server error, keeping cookies for retry..."
+          );
+          // Don't clear cookies, just log out the user state
+          dispatch(logout());
+        }
       }
     };
 

@@ -5,21 +5,22 @@
 // import WithDrawMembership from "./WithdrawMembership";
 // import ChatBot from "../../components/chatbot/ChatBot";
 
-import React, { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
-import InfoList from "../../components/mypage/InfoList";
-import ProfileImage from "../../components/mypage/ProfileImage";
-import SubLayout from "../../layout/SubLayout";
-import { fetchCurrentMember } from "../../api/authIssueUserApi/memberApi";
-import useLogout from "../../utils/memberJwtUtil/useLogout";
-import calculateCalories from "../../components/mypage/calculateCalories";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { editProfile } from "../../slices/loginSlice";
 import {
-  editProfile,
-  updatePhoto as updatePhotoRedux,
-} from "../../slices/loginSlice";
+  fetchCurrentMember,
+  updatePhoto,
+} from "../../api/authIssueUserApi/memberApi";
 import { uploadProfileImageWithCleanup } from "../../utils/imageUpload/uploadImageToSupabase";
-import { updatePhoto } from "../../api/authIssueUserApi/memberApi";
+import { getUserInfo, updateUserPhoto } from "../../utils/cookieUtils";
+import calculateCalories from "../../components/mypage/calculateCalories";
+import SubLayout from "../../layout/SubLayout";
+import ProfileImage from "../../components/mypage/ProfileImage";
+import DebugAuthOverlay from "../../components/mypage/DebugAuthOverlay";
+import useLogout from "../../utils/memberJwtUtil/useLogout";
+import InfoList from "../../components/mypage/InfoList";
+import { Link } from "react-router-dom";
 
 export default function MyPage() {
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ export default function MyPage() {
 
   // Debug: Log current user data
   console.log("MyPage - Current user data:", currentUser);
-  console.log("MyPage - Photo URL:", currentUser?.photo);
+  console.log("MyPage - profileImageUrl URL:", currentUser?.profileImageUrl);
 
   // Calculate recommended calories
   const recommendedCalories =
@@ -54,8 +55,9 @@ export default function MyPage() {
       setIsLoading(true);
       console.log("🖼️ Starting profile image upload from MyPage...");
 
-      // Get current image URL for cleanup
-      const currentImageUrl = currentUser.photo || currentUser.profileImageUrl;
+      // Get current user info using unified structure
+      const currentUserInfo = getUserInfo();
+      const currentImageUrl = currentUserInfo?.profileImageUrl;
       console.log("🖼️ Current image URL for cleanup:", currentImageUrl);
 
       // Upload optimized profile image to Supabase with cleanup
@@ -66,26 +68,48 @@ export default function MyPage() {
       console.log("✅ Profile image upload result:", uploadResult);
       console.log("🔧 DEBUG: MyPage received imageUrl:", uploadResult.imageUrl);
 
-      // Get current user ID from Redux state (which is already available)
-      if (!currentUser) {
-        throw new Error("User not found in Redux state");
+      // Get current user ID from unified userData
+      if (!currentUserInfo) {
+        throw new Error("User not found in userData");
       }
 
-      const memberId = currentUser.memberId || currentUser.id;
+      const memberId = currentUserInfo.memberId;
       if (!memberId) {
         throw new Error("Member ID not found in user data");
       }
 
-      // Update backend with new photo URL
-      await updatePhoto(uploadResult.imageUrl);
+      // Update backend with new profileImageUrl file name
+      await updatePhoto(uploadResult.fileName);
 
       // Fetch updated user data from backend
       const updatedUserData = await fetchCurrentMember();
+      console.log(
+        "🔧 DEBUG: MyPage - fetched updated user data:",
+        updatedUserData
+      );
 
       // Update Redux state with fresh user data
       if (updatedUserData) {
-        dispatch(editProfile(updatedUserData));
+        console.log(
+          "🔧 DEBUG: MyPage - dispatching editProfile with:",
+          updatedUserData
+        );
+
+        // Force update the profileImageUrl URL in case backend didn't return it
+        const userDataWithPhoto = {
+          ...updatedUserData,
+          profileImageUrl: uploadResult.fileName, // Use the new image URL from Supabase
+        };
+
+        console.log(
+          "🔧 DEBUG: MyPage - forcing profileImageUrl URL update:",
+          userDataWithPhoto
+        );
+        dispatch(editProfile(userDataWithPhoto));
       }
+
+      // Also update the cookie directly using utility function
+      updateUserPhoto(uploadResult.fileName);
 
       console.log("📊 Image optimization stats:");
       console.log(
@@ -157,18 +181,19 @@ export default function MyPage() {
     //     <ChatBot />
 
     <div className="w-full max-w-[1020px] mx-auto px-4">
-      <SubLayout to="/" menu="마이페이지" label="내 정보" />
+      <SubLayout to="/dashboard" menu="마이페이지" label="내 정보" />
 
       <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
         <div className="space-y-8">
           {/* Profile Section */}
           <div className="flex flex-col items-center space-y-4">
             <ProfileImage
-              photo={currentUser.photo}
-              currentImage={currentUser.photo}
+              photo={currentUser.profileImageUrl}
+              currentImage={currentUser.profileImageUrl}
               nickname={currentUser.nickname}
               onImageChange={handleImageChange}
               size="large"
+              useThumbnail={false} // Disable thumbnails for profile images
             />
             <h2 className="text-2xl font-bold">{currentUser.nickname}</h2>
             <p className="text-gray-600">{currentUser.email}</p>

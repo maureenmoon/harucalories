@@ -82,11 +82,11 @@ export default function EditProfile() {
       }
 
       // Update backend with new photo URL
-      const response = await updatePhoto(uploadResult.imageUrl);
+      const response = await updatePhoto(uploadResult.fileName);
 
       // Update form and Redux state with new photo URL
-      setForm((prev) => ({ ...prev, photo: uploadResult.imageUrl }));
-      dispatch(editProfile({ ...currentUser, photo: uploadResult.imageUrl }));
+      setForm((prev) => ({ ...prev, photo: uploadResult.fileName }));
+      dispatch(editProfile({ ...currentUser, photo: uploadResult.fileName }));
 
       console.log("📊 Image optimization stats:");
       console.log(
@@ -169,6 +169,7 @@ export default function EditProfile() {
               currentImage={form.photo}
               onImageChange={handlePhotoChange}
               disabled={isLoading}
+              useThumbnail={false} // Disable thumbnails for profile images
             />
           </div>
 

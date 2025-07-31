@@ -18,10 +18,12 @@ const getTimestampPrefix = () => {
 // Create thumbnail from original image
 const createThumbnail = async (file, maxWidth = 150, maxHeight = 150) => {
   const options = {
-    maxSizeMB: 0.05, // 50KB max for thumbnails
+    maxSizeMB: 0.01, // 10KB max for thumbnails (very aggressive)
     maxWidthOrHeight: Math.min(maxWidth, maxHeight),
     useWebWorker: true,
     fileType: "image/jpeg", // Convert to JPEG for smaller size
+    quality: 0.6, // Lower quality for smaller size
+    alwaysKeepResolution: false, // Allow resolution reduction
   };
 
   return await imageCompression(file, options);
@@ -102,6 +104,7 @@ export async function compressAndUploadImage(
     // Create and upload thumbnail if requested
     if (createThumbnailFlag) {
       console.log("🖼️ Creating thumbnail...");
+      // Use original file with very aggressive compression for maximum size reduction
       const thumbnail = await createThumbnail(file);
       console.log(
         "📦 Thumbnail size:",
@@ -109,7 +112,12 @@ export async function compressAndUploadImage(
         "KB"
       );
 
-      const thumbnailPath = `${folder}/thumbnails/${optimizedFileName}`;
+      // Create thumbnail filename with "_thumb" suffix
+      const thumbnailFileName = optimizedFileName.replace(
+        /\.(jpg|jpeg|png)$/i,
+        "_thumb.$1"
+      );
+      const thumbnailPath = `${folder}/thumbnails/${thumbnailFileName}`;
       const { data: thumbData, error: thumbError } = await supabase.storage
         .from(SUPABASE_BUCKET_NAME)
         .upload(thumbnailPath, thumbnail, {
@@ -191,22 +199,56 @@ export async function uploadProfileImage(file) {
       "https://admehgvqowpibiuwugpv.supabase.co";
     const publicURL = `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${profileImagePath}`;
 
+    // Create and upload thumbnail
+    console.log("🖼️ Creating profile thumbnail...");
+    // Use original file with very aggressive compression for maximum size reduction
+    const thumbnail = await createThumbnail(file, 150, 150);
+    console.log("📦 Thumbnail size:", (thumbnail.size / 1024).toFixed(2), "KB");
+
+    // Create thumbnail filename with "_thumb" suffix
+    const thumbnailFileName = optimizedFileName.replace(
+      /\.(jpg|jpeg|png)$/i,
+      "_thumb.$1"
+    );
+    const thumbnailPath = `member/thumbnails/${thumbnailFileName}`;
+    const { data: thumbData, error: thumbError } = await supabase.storage
+      .from(SUPABASE_BUCKET_NAME)
+      .upload(thumbnailPath, thumbnail, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: "image/jpeg",
+      });
+
+    if (thumbError) {
+      console.warn(
+        "⚠️ Thumbnail upload failed, but main image was uploaded:",
+        thumbError
+      );
+    } else {
+      console.log("✅ Thumbnail uploaded successfully");
+    }
+
+    // Manually construct the thumbnail URL
+    const thumbnailURL = `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${thumbnailPath}`;
+
     console.log("✅ Profile image upload completed successfully");
     console.log("🔗 Generated public URL:", publicURL);
+    console.log("🔗 Generated thumbnail URL:", thumbnailURL);
     console.log(
       "📊 Compression ratio:",
       ((1 - optimizedImage.size / file.size) * 100).toFixed(1) + "%"
     );
 
     const result = {
-      imageUrl: publicURL,
+      fileUrl: publicURL,
+      thumbnailUrl: thumbnailURL,
       fileName: optimizedFileName,
       originalSize: file.size,
       optimizedSize: optimizedImage.size,
     };
 
     console.log("🔧 DEBUG: Result object before return:", result);
-    console.log("🔧 DEBUG: Result imageUrl before return:", result.imageUrl);
+    console.log("🔧 DEBUG: Result fileUrl before return:", result.fileUrl);
 
     return result;
   } catch (err) {
@@ -219,16 +261,47 @@ export async function uploadProfileImage(file) {
 export const getThumbnailUrl = (mainImageUrl) => {
   if (!mainImageUrl) return null;
 
+  console.log("🔧 getThumbnailUrl - Input URL:", mainImageUrl);
+
   // For meal images: replace 'meal' with 'meal/thumbnails'
   if (mainImageUrl.includes("/meal/")) {
-    return mainImageUrl.replace("/meal/", "/meal/thumbnails/");
+    const result = mainImageUrl.replace("/meal/", "/meal/thumbnails/");
+    console.log("🔧 getThumbnailUrl - Meal image result:", result);
+    return result;
   }
 
-  // For member images: replace 'member' with 'member/thumbnails'
+  // For member images: replace 'member' with 'member/thumbnails' and add "_thumb" suffix
   if (mainImageUrl.includes("/member/")) {
-    return mainImageUrl.replace("/member/", "/member/thumbnails/");
+    // Extract the filename from the URL
+    const urlParts = mainImageUrl.split("/");
+    const filename = urlParts[urlParts.length - 1];
+    console.log("🔧 getThumbnailUrl - Extracted filename:", filename);
+
+    // Create thumbnail filename with "_thumb" suffix
+    const thumbnailFilename = filename.replace(
+      /\.(jpg|jpeg|png)$/i,
+      "_thumb.$1"
+    );
+    console.log("🔧 getThumbnailUrl - Thumbnail filename:", thumbnailFilename);
+
+    // Replace the filename in the URL
+    urlParts[urlParts.length - 1] = thumbnailFilename;
+
+    // Insert "thumbnails" after "member" in the path
+    const memberIndex = urlParts.findIndex((part) => part === "member");
+    if (memberIndex !== -1) {
+      urlParts.splice(memberIndex + 1, 0, "thumbnails");
+    }
+
+    const result = urlParts.join("/");
+    console.log("🔧 getThumbnailUrl - Member image result:", result);
+    return result;
   }
 
+  console.log(
+    "🔧 getThumbnailUrl - No pattern matched, returning original:",
+    mainImageUrl
+  );
   return mainImageUrl;
 };
 
@@ -296,6 +369,7 @@ export const deleteImage = async (imageUrl) => {
         )
         .join("/");
 
+      console.log("🗑️ Attempting to delete thumbnail:", thumbnailFilePath);
       const { error: thumbnailError } = await supabase.storage
         .from(SUPABASE_BUCKET_NAME)
         .remove([thumbnailFilePath]);
@@ -325,16 +399,16 @@ export async function uploadProfileImageWithCleanup(file, oldImageUrl = null) {
       "🔧 DEBUG: Upload result from uploadProfileImage:",
       uploadResult
     );
-    console.log("🔧 DEBUG: Upload result imageUrl:", uploadResult.imageUrl);
+    console.log("🔧 DEBUG: Upload result fileUrl:", uploadResult.fileUrl);
 
     // If upload successful and we have an old image, delete it
-    if (uploadResult.imageUrl && oldImageUrl) {
+    if (uploadResult.fileUrl && oldImageUrl) {
       console.log("🧹 Cleaning up old profile image...");
       await deleteImage(oldImageUrl);
     }
 
     console.log("🔧 DEBUG: Final result before return:", uploadResult);
-    console.log("🔧 DEBUG: Final result imageUrl:", uploadResult.imageUrl);
+    console.log("🔧 DEBUG: Final result fileUrl:", uploadResult.fileUrl);
 
     return uploadResult;
   } catch (error) {
@@ -342,3 +416,31 @@ export async function uploadProfileImageWithCleanup(file, oldImageUrl = null) {
     throw error;
   }
 }
+
+// Generate main image URL from filename stored in profile_image_url
+export const getImageUrlFromFilename = (filename, folder = "member") => {
+  if (!filename) return null;
+  const baseUrl =
+    import.meta.env.VITE_SUPABASE_URL ||
+    "https://admehgvqowpibiuwugpv.supabase.co";
+  return `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${folder}/${filename}`;
+};
+
+// Generate thumbnail filename from main filename
+export const getThumbnailFilename = (mainFilename) => {
+  if (!mainFilename) return null;
+  return mainFilename.replace(/\.(jpg|jpeg|png)$/i, "_thumb.$1");
+};
+
+// Generate thumbnail URL from main filename
+export const getThumbnailUrlFromFilename = (
+  mainFilename,
+  folder = "member"
+) => {
+  if (!mainFilename) return null;
+  const thumbnailFilename = getThumbnailFilename(mainFilename);
+  const baseUrl =
+    import.meta.env.VITE_SUPABASE_URL ||
+    "https://admehgvqowpibiuwugpv.supabase.co";
+  return `${baseUrl}/storage/v1/object/public/${SUPABASE_BUCKET_NAME}/${folder}/thumbnails/${thumbnailFilename}`;
+};

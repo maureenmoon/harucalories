@@ -67,18 +67,39 @@ export default function Login() {
 
       // Fetch user data (cookies will be sent automatically)
       const user = await fetchCurrentMember();
+      console.log("🔍 Login - fetched user data:", user);
+      console.log("🔍 Login - user keys:", Object.keys(user || {}));
+      console.log("🔍 Login - user has email:", !!user?.email);
+      console.log("🔍 Login - user has nickname:", !!user?.nickname);
+
+      // Debug: Check if user data is valid
+      if (!user || Object.keys(user).length === 0) {
+        console.error("❌ Login - Backend returned empty user data!");
+        throw new Error("Backend returned empty user data");
+      }
+
+      if (!user.email || !user.nickname) {
+        console.error("❌ Login - Backend returned incomplete user data:", {
+          hasEmail: !!user.email,
+          hasNickname: !!user.nickname,
+          userData: user,
+        });
+        throw new Error("Backend returned incomplete user data");
+      }
 
       // Update Redux state (without tokens since they're in cookies)
-      dispatch(
-        loginAction({
-          ...user,
-          memberId: user.id,
-          // ✅ Don't pass tokens - they're in cookies
-        })
-      );
+      const userData = {
+        ...user,
+        memberId: user.id,
+        // ✅ Don't pass tokens - they're in cookies
+      };
+      console.log("🔍 Login - dispatching user data:", userData);
+      console.log("🔍 Login - userData keys:", Object.keys(userData || {}));
+
+      dispatch(loginAction(userData));
 
       console.log("✅ Login successful (cookie-based auth)");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       console.error("❌ Login error details:", {
         status: error.response?.status,

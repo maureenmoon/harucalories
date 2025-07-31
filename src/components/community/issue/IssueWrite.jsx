@@ -3,10 +3,14 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import PurBtn from "../../common/PurBtn";
 import SubLayout from "../../../layout/SubLayout";
+import { issueApi } from "../../../api/issueApi";
 
 function IssueWrite() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [reference, setReference] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSelector((state) => state.login);
 
@@ -18,41 +22,41 @@ function IssueWrite() {
       return;
     }
 
-    if (user?.role !== "admin") {
+    if (user?.role !== "ADMIN") {
       alert("관리자만 글을 작성할 수 있습니다.");
       navigate("/community/issue");
       return;
     }
   }, [isLoggedIn, user, navigate]);
 
-  if (!isLoggedIn || user?.role !== "admin") return null;
+  if (!isLoggedIn || user?.role !== "ADMIN") return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
-      alert("제목과 내용을 모두 작성해주세요.");
+      setError("제목과 내용을 모두 작성해주세요.");
       return;
     }
 
-    const issueId = Date.now();
-    const rawDate = new Date().toLocaleDateString("ko-KR");
-    const cleanDate = rawDate.endsWith(".") ? rawDate.slice(0, -1) : rawDate;
-    const newIssue = {
-      id: issueId,
-      title,
-      content,
-      writer: user.nickname,
-      date: cleanDate,
-    };
+    try {
+      setLoading(true);
+      setError(null);
 
-    // 기존 issues 가져오기
-    const existing = JSON.parse(localStorage.getItem("issues")) || [];
+      const issueData = {
+        title: title.trim(),
+        content: content.trim(),
+        reference: reference.trim(),
+        writer: user.nickname || "관리자",
+      };
 
-    // 새 글 추가
-    const updated = [...existing, newIssue];
-    localStorage.setItem("issues", JSON.stringify(updated));
-
-    alert("핫이슈가 등록되었습니다!");
-    navigate(`/community/issue/${newIssue.id}`);
+      const result = await issueApi.createIssue(issueData);
+      alert("핫이슈가 등록되었습니다!");
+      navigate(`/community/issue/${result.id}`);
+    } catch (err) {
+      console.error("이슈 생성 실패:", err);
+      setError("이슈 등록에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,6 +85,13 @@ function IssueWrite() {
           <p className="text-purple-700 text-sm sm:text-base"></p>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="text-red-600">{error}</div>
+          </div>
+        )}
+
         {/* 입력 폼 섹션 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100">
           {/* 제목 입력 */}
@@ -97,6 +108,26 @@ function IssueWrite() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="제목을 입력해주세요"
+              className="w-full h-12 rounded-lg bg-gray-50 px-4 border border-gray-200 
+                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                       placeholder-gray-400 transition-colors duration-200"
+            />
+          </div>
+
+          {/* 참고 URL 입력 */}
+          <div className="p-4 sm:p-6 border-b border-gray-100">
+            <label
+              className="block text-gray-700 text-sm sm:text-base font-medium mb-2"
+              htmlFor="reference"
+            >
+              참고 URL
+            </label>
+            <input
+              id="reference"
+              type="url"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="참고할 URL을 입력해주세요 (선택사항)"
               className="w-full h-12 rounded-lg bg-gray-50 px-4 border border-gray-200 
                        focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                        placeholder-gray-400 transition-colors duration-200"
@@ -127,17 +158,19 @@ function IssueWrite() {
         <div className="flex justify-between items-center gap-4">
           <button
             onClick={() => navigate(-1)}
+            disabled={loading}
             className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 
-                     transition-colors duration-200 text-sm sm:text-base"
+                     transition-colors duration-200 text-sm sm:text-base disabled:opacity-50"
           >
             취소
           </button>
           <button
             onClick={handleSubmit}
+            disabled={loading}
             className="px-6 py-2.5 rounded-lg bg-purple-500 text-white hover:bg-purple-600 
-                     transition-colors duration-200 text-sm sm:text-base"
+                     transition-colors duration-200 text-sm sm:text-base disabled:opacity-50"
           >
-            작성완료
+            {loading ? "저장 중..." : "작성완료"}
           </button>
         </div>
       </div>

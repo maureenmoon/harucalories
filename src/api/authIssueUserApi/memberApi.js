@@ -67,28 +67,59 @@ export const logoutMember = async () => {
 
 // 현재 로그인된 사용자 정보 가져오기
 export const fetchCurrentMember = async () => {
-  const res = await axios.get(`${API_BASE}/me`);
-  return res.data;
+  try {
+    console.log("🔧 fetchCurrentMember - requesting user data from backend...");
+    const res = await axios.get(`${API_BASE}/me`);
+    console.log("🔧 fetchCurrentMember - backend response:", res.data);
+    console.log(
+      "🔧 fetchCurrentMember - response keys:",
+      Object.keys(res.data || {})
+    );
+    console.log("🔧 fetchCurrentMember - has photo field:", !!res.data?.photo);
+    console.log(
+      "🔧 fetchCurrentMember - has profileImageUrl field:",
+      !!res.data?.profileImageUrl
+    );
+    console.log(
+      "🔧 fetchCurrentMember - has profile_image_url field:",
+      !!res.data?.profile_image_url
+    );
+
+    // If backend returns profile_image_url, map it to photo for frontend compatibility
+    if (res.data && res.data.profile_image_url && !res.data.photo) {
+      res.data.photo = res.data.profile_image_url;
+      console.log("🔧 fetchCurrentMember - mapped profile_image_url to photo");
+    }
+
+    return res.data;
+  } catch (error) {
+    console.error("❌ fetchCurrentMember error:", error);
+    throw error;
+  }
 };
 
-// 프로필 이미지 변경
-export const updateProfileImage = async (id, profileImage) => {
-  const formData = new FormData();
-  formData.append("profileImage", profileImage);
-  return axios.patch(`${API_BASE}/${id}/profile-image`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
+// 프로필 이미지 변경: 사용하지 않음
+// export const updateProfileImage = async (id, profileImage) => {
+//   const formData = new FormData();
+//   formData.append("profileImage", profileImage);
+//   return axios.patch(`${API_BASE}/${id}/profile-image`, formData, {
+//     headers: { "Content-Type": "multipart/form-data" },
+//   });
+// };
 
 // Supabase에서 받은 public URL을 백엔드로 전송 (MySQL에 저장됨)
 export const updatePhoto = async (photoUrl) => {
+  console.log("🔧 updatePhoto - sending photoUrl to backend:", photoUrl);
   try {
+    console.log("🔧 updatePhoto - sending photoUrl to backend:", photoUrl);
     const response = await axios.patch(`${API_BASE}/me/profile-image`, {
-      photoUrl: photoUrl,
+      profile_image_url: photoUrl, // Use the correct field name that matches database column
     });
+    console.log("🔧 updatePhoto - backend response:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Error updating photo:", error);
+    console.error("❌ Error updating photo:", error);
+    console.error("❌ Error response:", error.response?.data);
     throw error;
   }
 };
